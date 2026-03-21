@@ -611,6 +611,72 @@
             pointer-events: none;
         }
 
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 4px 4px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 8px;
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #3498db;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled):not(.active) {
+            background: #eaf4fb;
+            border-color: #3498db;
+        }
+
+        .page-btn.active {
+            background: #3498db;
+            border-color: #3498db;
+            color: white;
+            cursor: default;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn.prev-next {
+            font-weight: 700;
+            padding: 0 12px;
+        }
+
+        .page-ellipsis {
+            padding: 0 4px;
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+
         /* Business Plan Review Styles */
         .bpr-controls {
             display: flex;
@@ -1111,8 +1177,17 @@
         }
 
         .category-table th:first-child {
-            width: 30px;
-            text-align: center;
+            width: 0;
+            padding: 0;
+            border: none;
+            display: none;
+        }
+
+        .category-table td:first-child {
+            width: 0;
+            padding: 0;
+            border: none;
+            display: none;
         }
 
         .category-table th:nth-child(2) {
@@ -1123,6 +1198,67 @@
         .category-table th:nth-child(3) {
             width: 15%;
             text-align: center;
+        }
+
+        /* Aligned RAG header dots */
+        .rag-header-th {
+            padding: 12px 8px !important;
+        }
+
+        .rag-header-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rag-header-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            /* Match the 24px min-width of rag-mini so columns align */
+            flex: 0 0 24px;
+            width: 14px;
+        }
+
+        /* Downward-pointing triangles matching RAG colours */
+        .rag-header-triangle {
+            display: inline-block;
+            flex: 0 0 24px;
+            width: 0;
+            height: 0;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+        }
+
+        .red-tri   { border-top: 14px solid #e74c3c; }
+        .amber-tri { border-top: 14px solid #f39c12; }
+        .green-tri { border-top: 14px solid #27ae60; }
+
+        /* Risk Burden header with inline axis */
+        .burden-th {
+            padding: 8px 8px !important;
+            vertical-align: bottom !important;
+        }
+
+        .burden-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .burden-axis {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 400;
+            color: #7f8c8d;
+            padding: 0 2px;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 3px;
         }
 
         .category-table th:nth-child(4) {
@@ -2194,19 +2330,32 @@
                     <div class="risk-categories-section">
                         <div class="categories-header">
                             <h3 class="categories-title">CLICK A RISK CATEGORY BELOW TO DRILL DOWN</h3>
-                            <div class="burden-scale">
-                                <span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span><span>300</span><span>350</span>
-                            </div>
+
                         </div>
                         
                         <table class="category-table">
                             <thead>
                                 <tr>
-                                    <th>●</th>
+                                    <th></th>
                                     <th>Category</th>
-                                    <th>🔴 🟡 🟢</th>
+                                    <th class="rag-header-th">
+                                        <div class="rag-header-dots">
+                                            <span class="rag-header-triangle red-tri"></span>
+                                            <span class="rag-header-triangle amber-tri"></span>
+                                            <span class="rag-header-triangle green-tri"></span>
+                                        </div>
+                                    </th>
                                     <th>Avg.</th>
-                                    <th>Risk Burden</th>
+                                    <th class="burden-th">
+                                        <div class="burden-header">
+                                            <span>Risk Burden</span>
+                                            <div class="burden-axis">
+                                                <span>0</span><span>50</span><span>100</span>
+                                                <span>150</span><span>200</span><span>250</span>
+                                                <span>300</span><span>350</span>
+                                            </div>
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2536,6 +2685,11 @@
                             <!-- Risks will be populated here -->
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination -->
+                <div class="pagination-container" id="paginationContainer">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-controls" id="paginationControls"></div>
                 </div>
             </div>
 
@@ -5061,15 +5215,31 @@
 
         // ==================== RISK TABLE FUNCTIONS ====================
 
+        // ── Pagination state ──
+        let _currentPage = 1;
+        const PAGE_SIZE = 10;
+        let _currentRisks = [];
+
         function updateRiskTable(filteredRisks = null) {
-            const risksToShow = filteredRisks || risks;
+            _currentRisks = filteredRisks || risks;
+            _currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
             const tbody = document.getElementById('riskTableBody');
             tbody.innerHTML = '';
-            
-            risksToShow.forEach(risk => {
+
+            const total = _currentRisks.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            _currentPage = Math.min(_currentPage, totalPages);
+
+            const start = (_currentPage - 1) * PAGE_SIZE;
+            const pageRisks = _currentRisks.slice(start, start + PAGE_SIZE);
+
+            pageRisks.forEach(risk => {
                 const riskScore = calculateRiskScore(risk.likelihood, risk.impact, risk.proximity, risk.mitigationStatus);
                 const proximityLabel = getProximityLabel(risk.proximity);
-                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${risk.id}</td>
@@ -5087,7 +5257,66 @@
                 tbody.appendChild(row);
             });
 
-            // Update floating scrollbar after table is populated
+            // Update pagination info
+            const info = document.getElementById('paginationInfo');
+            if (total === 0) {
+                info.textContent = 'No risks to display';
+            } else {
+                const from = start + 1;
+                const to = Math.min(start + PAGE_SIZE, total);
+                info.textContent = 'Showing ' + from + '–' + to + ' of ' + total + ' risks';
+            }
+
+            // Build page buttons
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            function makeBtn(label, page, cls) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (cls ? ' ' + cls : '');
+                btn.innerHTML = label;
+                if (page !== null) {
+                    btn.onclick = () => { _currentPage = page; renderPage(); };
+                }
+                return btn;
+            }
+
+            // Previous
+            const prevBtn = makeBtn('&#8592; Prev', _currentPage - 1, 'prev-next');
+            prevBtn.disabled = _currentPage === 1;
+            controls.appendChild(prevBtn);
+
+            // Page numbers with ellipsis
+            const pages = [];
+            if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                if (_currentPage > 3) pages.push('...');
+                for (let i = Math.max(2, _currentPage - 1); i <= Math.min(totalPages - 1, _currentPage + 1); i++) pages.push(i);
+                if (_currentPage < totalPages - 2) pages.push('...');
+                pages.push(totalPages);
+            }
+
+            pages.forEach(p => {
+                if (p === '...') {
+                    const el = document.createElement('span');
+                    el.className = 'page-ellipsis';
+                    el.textContent = '…';
+                    controls.appendChild(el);
+                } else {
+                    const btn = makeBtn(p, p, p === _currentPage ? 'active' : '');
+                    if (p === _currentPage) btn.onclick = null;
+                    controls.appendChild(btn);
+                }
+            });
+
+            // Next
+            const nextBtn = makeBtn('Next &#8594;', _currentPage + 1, 'prev-next');
+            nextBtn.disabled = _currentPage === totalPages;
+            controls.appendChild(nextBtn);
+
+            // Update floating scrollbar
             setTimeout(() => {
                 const event = new Event('tableUpdated');
                 window.dispatchEvent(event);
