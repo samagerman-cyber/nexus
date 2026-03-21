@@ -14,6 +14,253 @@
             box-sizing: border-box;
         }
 
+
+        /* ===== APP SHELL: sidebar + main ===== */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top bar (always visible) */
+        .app-topbar {
+            background: linear-gradient(135deg, #700d19 0%, #8b1426 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 64px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+
+        .app-topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            user-select: none;
+        }
+
+        .nexus-logo {
+            font-size: 1.6em;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: white;
+        }
+
+        .nexus-logo .nx-x {
+            color: #e74c3c;
+            font-style: italic;
+        }
+
+        .app-topbar-title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .app-topbar-title h1 {
+            font-size: 1.6em;
+            font-weight: 300;
+            margin: 0;
+        }
+
+        .app-topbar-title p {
+            font-size: 0.8em;
+            opacity: 0.85;
+            margin: 0;
+        }
+
+        .sidebar-toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.15); }
+
+        /* App body below topbar */
+        .app-body {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Sidebar */
+        .app-sidebar {
+            width: 72px;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 8px;
+            flex-shrink: 0;
+            transition: width 0.35s cubic-bezier(.4,0,.2,1),
+                        opacity 0.35s ease,
+                        transform 0.35s cubic-bezier(.4,0,.2,1);
+            overflow: hidden;
+            position: relative;
+            z-index: 100;
+        }
+
+        .app-sidebar.collapsed {
+            width: 0;
+            opacity: 0;
+            transform: translateX(-72px);
+        }
+
+        .sidebar-icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            border: none;
+            background: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #a0aec0;
+            transition: background 0.2s, color 0.2s;
+            padding: 0;
+            position: relative;
+        }
+
+        .sidebar-icon-btn:hover,
+        .sidebar-icon-btn.active {
+            background: rgba(255,255,255,0.12);
+            color: white;
+        }
+
+        .sidebar-icon-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: currentColor;
+        }
+
+        .sidebar-icon-btn .icon-label {
+            font-size: 8px;
+            margin-top: 3px;
+            letter-spacing: 0.3px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .sidebar-divider {
+            width: 36px;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 6px 0;
+        }
+
+        /* Main content area */
+        .app-main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Home page */
+        .home-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: white;
+        }
+
+        .home-page.hidden { display: none; }
+
+        .home-welcome {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .home-welcome h2 {
+            font-size: 2em;
+            font-weight: 300;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .home-welcome p {
+            color: #7f8c8d;
+            font-size: 1.05em;
+        }
+
+        .home-ai-box {
+            width: 100%;
+            max-width: 540px;
+            background: #f5f5f5;
+            border: 1.5px solid #d0d0d0;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .home-ai-box textarea {
+            width: 100%;
+            min-height: 110px;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-size: 15px;
+            color: #2c3e50;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .home-ai-box textarea::placeholder { color: #aaa; }
+
+        .home-ai-watermark {
+            position: absolute;
+            bottom: 18px;
+            right: 20px;
+            opacity: 0.12;
+            pointer-events: none;
+        }
+
+        .home-ai-watermark svg {
+            width: 60px;
+            height: 60px;
+        }
+
+        /* Existing container shown inside app-main */
+        .container {
+            max-width: none !important;
+            width: 100%;
+            background: white;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden;
+        }
+
+        /* Hide original header (replaced by topbar) */
+        .header { display: none !important; }
+
+        /* ===== END APP SHELL ===== */
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1881,6 +2128,7 @@
             display: flex;
             gap: 20px;
             align-items: flex-start;
+            justify-content: center;
         }
 
         .quadrant-chart-enhanced {
@@ -1892,7 +2140,6 @@
             flex-shrink: 0;
             margin-left: 80px;
             margin-bottom: 80px;
-            margin-right: 60px;
         }
 
         .quadrant-bg {
@@ -2023,13 +2270,16 @@
             border-radius: 8px;
             padding: 15px;
             width: 250px;
+            min-width: 250px;
             flex-shrink: 0;
             max-height: 500px;
             overflow-y: auto;
+            transition: visibility 0.2s, opacity 0.2s;
         }
 
         .quad-legend.hidden {
-            display: none;
+            visibility: hidden;
+            opacity: 0;
         }
 
         .quad-legend h3 {
@@ -2302,20 +2552,90 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="header">
-            <h1>TARA Risk Management System</h1>
-            <p>Threat Assessment & Risk Analysis Platform</p>
+    <div class="app-shell">
+        <!-- TOP BAR -->
+        <div class="app-topbar">
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle menu">&#9776;</button>
+            <div class="app-topbar-logo" onclick="navigateHome()" title="Go to Home">
+                <span class="nexus-logo">NE<span class="nx-x">X</span>US</span>
+            </div>
+            <div class="app-topbar-title">
+                <h1>TARA Risk Management System</h1>
+                <p>Threat Assessment &amp; Risk Analysis Platform</p>
+            </div>
+            <div style="width:90px;"></div><!-- spacer to balance logo -->
         </div>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
-            <button class="nav-tab" data-tab="register">Risk Register</button>
-            <button class="nav-tab" data-tab="business-plan">Business Plan Review</button>
-            <button class="nav-tab" data-tab="quadrant">Quadrant Chart</button>
-        </div>
+        <!-- APP BODY -->
+        <div class="app-body">
 
-        <div class="content">
+            <!-- SIDEBAR -->
+            <div class="app-sidebar" id="appSidebar">
+                <!-- Home -->
+                <button class="sidebar-icon-btn active" id="sidebarHome" onclick="navigateHome()" title="Home">
+                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span class="icon-label">Home</span>
+                </button>
+                <div class="sidebar-divider"></div>
+                <!-- Risk Register -->
+                <button class="sidebar-icon-btn" id="sidebarRegister" onclick="sidebarNav('register')" title="Risk Register">
+                    <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 4h18v2H3zm0 4h12v2H3zm0 4h12v2H3zm0 4h8v2H3z"/></svg>
+                    <span class="icon-label">Register</span>
+                </button>
+                <!-- Dashboard -->
+                <button class="sidebar-icon-btn" id="sidebarDashboard" onclick="sidebarNav('dashboard')" title="Dashboard">
+                    <svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zm5.6-4.2h2.8v14h-2.8zm5.6 8h2.8v6h-2.8z"/></svg>
+                    <span class="icon-label">Dashboard</span>
+                </button>
+                <!-- Business Plan Review -->
+                <button class="sidebar-icon-btn" id="sidebarBPR" onclick="sidebarNav('business-plan')" title="Business Plan Review">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    <span class="icon-label">BPR</span>
+                </button>
+                <!-- Quadrant Chart -->
+                <button class="sidebar-icon-btn" id="sidebarQuadrant" onclick="sidebarNav('quadrant')" title="Quadrant Chart">
+                    <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>
+                    <span class="icon-label">Quadrant</span>
+                </button>
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="app-main" id="appMain">
+
+                <!-- HOME PAGE -->
+                <div class="home-page" id="homePage">
+                    <div class="home-welcome">
+                        <h2>Welcome to Nexus</h2>
+                        <p>Threat Assessment &amp; Risk Analysis Platform</p>
+                    </div>
+                    <div class="home-ai-box">
+                        <textarea placeholder="Describe a risk or improvement idea…" id="homeAiInput"></textarea>
+                        <div class="home-ai-watermark">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="#700d19" stroke-width="4"/>
+                                <ellipse cx="50" cy="50" rx="30" ry="12" fill="none" stroke="#700d19" stroke-width="4" transform="rotate(40 50 50)"/>
+                                <ellipse cx="50" cy="50" rx="30" ry="12" fill="none" stroke="#700d19" stroke-width="4" transform="rotate(-40 50 50)"/>
+                                <circle cx="50" cy="50" r="5" fill="#700d19"/>
+                                <text x="50" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="#700d19">AI</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXISTING APP (hidden until a tab is selected) -->
+                <div id="appContainer" style="display:none;">
+                    <div class="container">
+                        <div class="header">
+                            <h1>TARA Risk Management System</h1>
+                            <p>Threat Assessment &amp; Risk Analysis Platform</p>
+                        </div>
+                        <div class="nav-tabs">
+                            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+                            <button class="nav-tab" data-tab="register">Risk Register</button>
+                            <button class="nav-tab" data-tab="business-plan">Business Plan Review</button>
+                            <button class="nav-tab" data-tab="quadrant">Quadrant Chart</button>
+                        </div>
+                        <div class="content">
             <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-content active">
                 <div class="dashboard-layout">
@@ -3027,6 +3347,9 @@
                             <button class="toggle-btn" id="mitigationToggle">
                                 Show Post-Mitigation
                             </button>
+                            <button class="toggle-btn" id="legendToggle" onclick="toggleQuadLegend()">
+                                Hide Legend
+                            </button>
                         </div>
                     </div>
 
@@ -3140,12 +3463,12 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                        </div><!-- /.content -->
+                    </div><!-- /.container -->
+                </div><!-- /#appContainer -->
+            </div><!-- /#appMain -->
+        </div><!-- /.app-body -->
+    </div><!-- /.app-shell -->
 
     <!-- Floating Scrollbar -->
     <div class="floating-scrollbar" id="floatingScrollbar">
@@ -5687,6 +6010,10 @@
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
+                    // Sync sidebar highlight
+                    document.querySelectorAll('.sidebar-icon-btn').forEach(b => b.classList.remove('active'));
+                    const sidebarMap = {'dashboard':'sidebarDashboard','register':'sidebarRegister','business-plan':'sidebarBPR','quadrant':'sidebarQuadrant'};
+                    if (sidebarMap[tabName]) document.getElementById(sidebarMap[tabName]).classList.add('active');
                     showTab(tabName);
                 });
             });
@@ -5761,6 +6088,64 @@
                 }
             });
         });
+
+
+        // ==================== QUADRANT LEGEND TOGGLE ====================
+        function toggleQuadLegend() {
+            const legend = document.getElementById('quadLegend');
+            const btn = document.getElementById('legendToggle');
+            const isHidden = legend.classList.contains('hidden');
+            if (isHidden) {
+                legend.classList.remove('hidden');
+                btn.textContent = 'Hide Legend';
+            } else {
+                legend.classList.add('hidden');
+                btn.textContent = 'Show Legend';
+            }
+        }
+        // ==================== END QUADRANT LEGEND TOGGLE ====================
+
+        // ==================== HOME PAGE & SIDEBAR ====================
+
+        let _sidebarOpen = true;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('appSidebar');
+            _sidebarOpen = !_sidebarOpen;
+            if (_sidebarOpen) {
+                sidebar.classList.remove('collapsed');
+            } else {
+                sidebar.classList.add('collapsed');
+            }
+        }
+
+        function navigateHome() {
+            // Show home page, hide app container
+            document.getElementById('homePage').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+            // Clear active from all sidebar buttons
+            document.querySelectorAll('.sidebar-icon-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sidebarHome').classList.add('active');
+        }
+
+        function sidebarNav(tabName) {
+            // Hide home page, show app container
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            // Activate correct tab
+            showTab(tabName);
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-icon-btn').forEach(b => b.classList.remove('active'));
+            const map = {
+                'dashboard': 'sidebarDashboard',
+                'register': 'sidebarRegister',
+                'business-plan': 'sidebarBPR',
+                'quadrant': 'sidebarQuadrant'
+            };
+            if (map[tabName]) document.getElementById(map[tabName]).classList.add('active');
+        }
+
+        // ==================== END HOME PAGE & SIDEBAR ====================
 
         // ==================== FLOATING SCROLLBAR SYNC ====================
         
