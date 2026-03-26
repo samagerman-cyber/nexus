@@ -2255,7 +2255,7 @@
 
         .quadrant-chart-enhanced {
             position: relative;
-            width: 600px;
+            width: 750px;
             height: 500px;
             border: 2px solid #2c3e50;
             background: white;
@@ -2391,7 +2391,7 @@
         .quad-cat-panel {
             position: absolute;
             top: 0;
-            left: -252px; /* 220px panel + 16px gap + 16px from chart margin */
+            left: -210px; /* clears y-axis label (-85px) and scale numbers (-40px) from chart edge */
             background: white;
             border: 2px solid #bbb;
             border-radius: 8px;
@@ -2478,14 +2478,14 @@
             position: relative;
             display: inline-block;
             overflow: visible;
-            /* width = chart margin-left + chart width = 80 + 600 = 680px */
-            width: 680px;
+            /* width = chart margin-left + chart width = 80 + 750 = 830px */
+            width: 830px;
         }
 
         .quad-legend {
             position: absolute;
             top: 0;
-            left: 696px; /* wrapper width(680) + gap(16) */
+            left: 902px; /* symmetric with cat panel: same 60px extra clearance */
             background: white;
             border: 2px solid #bbb;
             border-radius: 8px;
@@ -3583,7 +3583,7 @@
 
             <!-- Quadrant Chart Tab -->
             <div id="quadrant" class="tab-content">
-                <div class="quadrant-header" style="max-width:680px;margin:0 auto;padding-left:80px;box-sizing:border-box;">
+                <div class="quadrant-header" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;">
                     <div class="quadrant-title-bar">
                         <h1 class="quadrant-title">Likelihood vs Impact</h1>
                     </div>
@@ -3591,7 +3591,7 @@
                 </div>
 
                 <div class="quadrant-main-container">
-                    <div class="quadrant-controls" style="max-width:680px;margin:0 auto;padding-left:80px;box-sizing:border-box;justify-content:flex-start;">
+                    <div class="quadrant-controls" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;justify-content:flex-start;">
                         <div class="filter-group">
                             <button class="toggle-btn" id="catFilterToggle" onclick="toggleCatPanel()">
                                 Select Categories
@@ -3648,7 +3648,7 @@
                             </div>
                         </div>
                         <div class="quad-legend" id="quadLegend">
-                            <h3>QUAD CHART LEGEND</h3>
+                            <h3>LEGEND</h3>
                             
                             <div class="legend-section">
                                 <h4>MITIGATION STATUS (right side)</h4>
@@ -5986,87 +5986,153 @@
 
         // ==================== QUADRANT CHART FUNCTIONS ====================
 
+        function getMitigationSVGSymbol(status) {
+            // Returns a crisp SVG path + colour for the mitigation status
+            const s = (status || '').toLowerCase();
+            if (s.includes('none'))           return { symbol: '✕', bg: '#e74c3c', fg: 'white' };
+            if (s.includes('identified'))     return { symbol: '◉', bg: '#9b59b6', fg: 'white' };
+            if (s.includes('planned'))        return { symbol: '!',  bg: '#3498db', fg: 'white' };
+            if (s.includes('fully'))          return { symbol: '💯', bg: '#ffffff', fg: '#333'  };
+            if (s.includes('validated'))      return { symbol: '✓✓', bg: '#1e8449', fg: 'white' };
+            if (s.includes('implemented'))    return { symbol: '✓',  bg: '#27ae60', fg: 'white' };
+            if (s.includes('eliminated'))     return { symbol: '★',  bg: '#34495e', fg: 'white' };
+            return { symbol: '✕', bg: '#e74c3c', fg: 'white' };
+        }
+
+        function getProximityGradient(proximity) {
+            // Returns CSS background for the proximity bar
+            const r = '#cc2200', b = '#111111';
+            const g = (pct) => `linear-gradient(to right,${b} ${pct}%,${r} ${pct}%)`;
+            switch(Number(proximity)) {
+                case 0: return r;
+                case 1: return g(20);
+                case 2: return g(40);
+                case 3: return g(65);
+                case 4: return b;
+                case 5: return `linear-gradient(to right,${r} 50%,${b} 50%)`;
+                default: return r;
+            }
+        }
+
         function createDualDisplayPoint(risk, isOverlapped) {
-            // Create the main point container
             const point = document.createElement('div');
             point.className = 'enhanced-risk-point';
-            
+
             if (isOverlapped) {
-                // For overlapped items, show square warning symbol like in legend
-                point.innerHTML = '⚠ ';
-                point.style.backgroundColor = '#f39c12';
-                point.style.color = '#333';
-                point.style.width = '20px'; // Make it square
-                point.style.height = '20px';
-                point.style.justifyContent = 'center';
+                // Crisp overlap marker
+                point.style.cssText = 'width:22px;height:22px;border-radius:4px;background:#f39c12;border:1.5px solid #d68910;display:flex;align-items:center;justify-content:center;font-size:13px;color:#333;font-weight:bold;';
+                point.textContent = '⚠';
                 return point;
             }
-            
-            // Create proximity indicator (left side)
-            const proximityDiv = document.createElement('div');
-            proximityDiv.className = 'proximity-indicator';
-            
-            // Apply proximity background patterns exactly matching legend
-            switch(risk.proximity) {
-                case 0: // Unknown - 100% red
-                    proximityDiv.style.background = '#cc0000';
-                    break;
-                case 1: // Immediate - should be 25% black, 75% red (mostly red)
-                    proximityDiv.style.background = 'linear-gradient(to right, #000000 0%, #000000 25%, #cc0000 25%, #cc0000 100%)';
-                    break;
-                case 2: // Imminent - should be 50% black, 50% red  
-                    proximityDiv.style.background = 'linear-gradient(to right, #000000 0%, #000000 50%, #cc0000 50%, #cc0000 100%)';
-                    break;
-                case 3: // Midterm - should be 75% black, 25% red (mostly black)
-                    proximityDiv.style.background = 'linear-gradient(to right, #000000 0%, #000000 75%, #cc0000 75%, #cc0000 100%)';
-                    break;
-                case 4: // Longterm - 100% black
-                    proximityDiv.style.background = '#000000';
-                    break;
-                case 5: // SA Review - 50% red, 50% black (red first)
-                    proximityDiv.style.background = 'linear-gradient(to right, #cc0000 0%, #cc0000 50%, #000000 50%, #000000 100%)';
-                    break;
-                default: // Default to Unknown - 100% red
-                    proximityDiv.style.background = '#cc0000';
-                    break;
-            }
-            
-            // Create mitigation indicator (right side)
-            const mitigationDiv = document.createElement('div');
-            mitigationDiv.className = 'mitigation-indicator';
-            mitigationDiv.textContent = getMitigationSymbol(risk.mitigationStatus);
-            
-            // Apply mitigation background colors
-            if (risk.mitigationStatus.includes('None')) {
-                mitigationDiv.style.backgroundColor = '#e74c3c';
-                mitigationDiv.style.color = 'white';
-            } else if (risk.mitigationStatus.includes('Identified')) {
-                mitigationDiv.style.backgroundColor = '#9b59b6';
-                mitigationDiv.style.color = 'white';
-            } else if (risk.mitigationStatus.includes('Planned')) {
-                mitigationDiv.style.backgroundColor = '#3498db';
-                mitigationDiv.style.color = 'white';
-            } else if (risk.mitigationStatus.includes('Implemented')) {
-                mitigationDiv.style.backgroundColor = '#27ae60';
-                mitigationDiv.style.color = 'white';
-            } else if (risk.mitigationStatus.includes('Validated')) {
-                mitigationDiv.style.backgroundColor = '#1e8449';
-                mitigationDiv.style.color = 'white';
-            } else if (risk.mitigationStatus.includes('Fully mitigated')) {
-                mitigationDiv.style.backgroundColor = '#FFFFFF';
-                mitigationDiv.style.color = '#333';
-            } else if (risk.mitigationStatus.includes('Eliminated')) {
-                mitigationDiv.style.backgroundColor = '#34495e';
-                mitigationDiv.style.color = 'white';
+
+            const mit = getMitigationSVGSymbol(risk.mitigationStatus);
+
+            // Build as a single crisp SVG — no nested divs, no blurriness
+            const W = 68, H = 20, SPLIT = 52; // total width, height, proximity width
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', W);
+            svg.setAttribute('height', H);
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.style.display = 'block';
+            svg.style.shapeRendering = 'crispEdges';
+
+            // Proximity gradient zones
+            const proxPct = (() => {
+                switch(Number(risk.proximity)) {
+                    case 0: return [0, 100];   // all red
+                    case 1: return [20, 80];
+                    case 2: return [40, 60];
+                    case 3: return [65, 35];
+                    case 4: return [100, 0];   // all black
+                    case 5: return [-50, 150]; // red|black (special: red left half, black right)
+                    default: return [0, 100];
+                }
+            })();
+
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const gradId = 'pg' + Math.random().toString(36).slice(2,7);
+            const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            grad.setAttribute('id', gradId);
+            grad.setAttribute('x1', '0'); grad.setAttribute('x2', '1');
+            grad.setAttribute('y1', '0'); grad.setAttribute('y2', '0');
+
+            if (Number(risk.proximity) === 5) {
+                // SA Review: red left, black right
+                [['0','#cc2200'],['50%','#cc2200'],['50%','#111111'],['100%','#111111']].forEach(([o,c]) => {
+                    const stop = document.createElementNS('http://www.w3.org/2000/svg','stop');
+                    stop.setAttribute('offset', o); stop.setAttribute('stop-color', c); grad.appendChild(stop);
+                });
             } else {
-                mitigationDiv.style.backgroundColor = '#e74c3c';
-                mitigationDiv.style.color = 'white';
+                const blackPct = proxPct[0] + '%';
+                [['0','#111111'],[blackPct,'#111111'],[blackPct,'#cc2200'],['100%','#cc2200']].forEach(([o,c]) => {
+                    const stop = document.createElementNS('http://www.w3.org/2000/svg','stop');
+                    stop.setAttribute('offset', o); stop.setAttribute('stop-color', c); grad.appendChild(stop);
+                });
             }
-            
-            // Add both indicators to the point
-            point.appendChild(proximityDiv);
-            point.appendChild(mitigationDiv);
-            
+            defs.appendChild(grad);
+            svg.appendChild(defs);
+
+            // Outer border
+            const border = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            border.setAttribute('x','0'); border.setAttribute('y','0');
+            border.setAttribute('width', W); border.setAttribute('height', H);
+            border.setAttribute('rx','2'); border.setAttribute('ry','2');
+            border.setAttribute('fill', 'none');
+            border.setAttribute('stroke','#333'); border.setAttribute('stroke-width','1');
+            svg.appendChild(border);
+
+            // Proximity fill (left section)
+            const proxRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            proxRect.setAttribute('x','0.5'); proxRect.setAttribute('y','0.5');
+            proxRect.setAttribute('width', SPLIT-1); proxRect.setAttribute('height', H-1);
+            proxRect.setAttribute('fill', `url(#${gradId})`);
+            svg.appendChild(proxRect);
+
+            // Divider between prox and mit
+            const div = document.createElementNS('http://www.w3.org/2000/svg','line');
+            div.setAttribute('x1', SPLIT); div.setAttribute('y1', '0');
+            div.setAttribute('x2', SPLIT); div.setAttribute('y2', H);
+            div.setAttribute('stroke','#333'); div.setAttribute('stroke-width','1');
+            svg.appendChild(div);
+
+            // Mitigation background (right section)
+            const mitRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            mitRect.setAttribute('x', SPLIT+0.5); mitRect.setAttribute('y','0.5');
+            mitRect.setAttribute('width', W-SPLIT-1); mitRect.setAttribute('height', H-1);
+            mitRect.setAttribute('fill', mit.bg);
+            svg.appendChild(mitRect);
+
+            // Mitigation symbol text
+            const mitText = document.createElementNS('http://www.w3.org/2000/svg','text');
+            mitText.setAttribute('x', SPLIT + (W-SPLIT)/2);
+            mitText.setAttribute('y', H/2 + 1);
+            mitText.setAttribute('text-anchor','middle');
+            mitText.setAttribute('dominant-baseline','middle');
+            mitText.setAttribute('font-size','9');
+            mitText.setAttribute('font-weight','bold');
+            mitText.setAttribute('font-family','monospace');
+            mitText.setAttribute('fill', mit.fg);
+            mitText.textContent = mit.symbol;
+            svg.appendChild(mitText);
+
+            // RAG dot on proximity bar (small coloured circle)
+            const ragColors = { red:'#e74c3c', amber:'#f39c12', green:'#27ae60' };
+            const ragC = ragColors[risk.rag] || '#aaa';
+            const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            dot.setAttribute('cx', SPLIT/2); dot.setAttribute('cy', H/2);
+            dot.setAttribute('r','4');
+            dot.setAttribute('fill', ragC);
+            dot.setAttribute('stroke','white'); dot.setAttribute('stroke-width','0.8');
+            svg.appendChild(dot);
+
+            // Replace the point's inner content
+            point.style.width = W + 'px';
+            point.style.height = H + 'px';
+            point.style.border = 'none';
+            point.style.background = 'transparent';
+            point.style.gap = '0';
+            point.appendChild(svg);
+
             return point;
         }
 
