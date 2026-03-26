@@ -2386,6 +2386,94 @@
             font-weight: bold;
         }
 
+
+        /* ===== CATEGORY FILTER PANEL (left of chart) ===== */
+        .quad-cat-panel {
+            position: absolute;
+            top: 0;
+            left: -252px; /* 220px panel + 16px gap + 16px from chart margin */
+            background: white;
+            border: 2px solid #bbb;
+            border-radius: 8px;
+            padding: 15px;
+            width: 220px;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: visibility 0.2s, opacity 0.2s;
+            z-index: 10;
+        }
+
+        .quad-cat-panel.hidden {
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .quad-cat-panel h3 {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .cat-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 4px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+        .cat-filter-item:last-child { border-bottom: none; }
+        .cat-filter-item:hover { background: #f8f9fa; }
+
+        .cat-filter-item input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+            accent-color: #3498db;
+        }
+
+        .cat-filter-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .cat-filter-label {
+            font-size: 11.5px;
+            color: #2c3e50;
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .cat-filter-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .cat-filter-btn {
+            flex: 1;
+            padding: 5px 0;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #bdc3c7;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #555;
+            transition: background 0.15s;
+        }
+        .cat-filter-btn:hover { background: #f0f0f0; }
+        /* ===== END CATEGORY FILTER PANEL ===== */
+
         .quadrant-chart-wrapper {
             position: relative;
             display: inline-block;
@@ -3505,15 +3593,9 @@
                 <div class="quadrant-main-container">
                     <div class="quadrant-controls" style="max-width:680px;margin:0 auto;padding-left:80px;box-sizing:border-box;justify-content:flex-start;">
                         <div class="filter-group">
-                            <select id="quadrantCategoryFilter">
-                                <option value="">All Categories</option>
-                                <option value="Strategic & Commercial">Strategic & Commercial</option>
-                                <option value="Financial & Credit">Financial & Credit</option>
-                                <option value="Operational & Execution">Operational & Execution</option>
-                                <option value="Technology & Platform">Technology & Platform</option>
-                                <option value="Cybersecurity & Information Security">Cybersecurity & Information Security</option>
-                                <option value="Legal, Regulatory & Compliance">Legal, Regulatory & Compliance</option>
-                            </select>
+                            <button class="toggle-btn" id="catFilterToggle" onclick="toggleCatPanel()">
+                                Select Categories
+                            </button>
                             <button class="toggle-btn" id="mitigationToggle">
                                 Show Post-Mitigation
                             </button>
@@ -3556,6 +3638,14 @@
                             </div>
                             
                             <!-- Risk points will be added here dynamically -->
+                        </div>
+                        <div class="quad-cat-panel hidden" id="quadCatPanel">
+                            <h3>FILTER CATEGORIES</h3>
+                            <div id="catFilterList"></div>
+                            <div class="cat-filter-actions">
+                                <button class="cat-filter-btn" onclick="setCatFilterAll(true)">Select All</button>
+                                <button class="cat-filter-btn" onclick="setCatFilterAll(false)">Clear All</button>
+                            </div>
                         </div>
                         <div class="quad-legend" id="quadLegend">
                             <h3>QUAD CHART LEGEND</h3>
@@ -5981,19 +6071,23 @@
         }
 
         function updateQuadrantChart() {
-            const categoryFilter = document.getElementById('quadrantCategoryFilter').value;
             const container = document.getElementById('quadrantChartContainer');
             
             // Clear existing risk points and tooltips
             container.querySelectorAll('.enhanced-risk-point, .enhanced-risk-label, .risk-tooltip').forEach(el => el.remove());
             
+            // Get selected categories from checkboxes (fall back to all if panel not yet initialised)
+            const checked = Array.from(document.querySelectorAll('.cat-checkbox:checked')).map(cb => cb.value);
             let risksToPlot = risks;
-            if (categoryFilter) {
-                risksToPlot = risks.filter(risk => risk.category === categoryFilter);
+            if (checked.length > 0 && checked.length < QUAD_CATEGORIES.length) {
+                risksToPlot = risks.filter(risk => checked.includes(risk.category));
             }
 
             // Update subtitle
-            const subtitle = categoryFilter ? `${categoryFilter} (${risksToPlot.length})` : `All Categories (${risksToPlot.length})`;
+            const allSelected = checked.length === 0 || checked.length === QUAD_CATEGORIES.length;
+            const subtitle = allSelected
+                ? `All Categories (${risksToPlot.length})`
+                : `${checked.length} categor${checked.length === 1 ? 'y' : 'ies'} selected (${risksToPlot.length})`;
             document.getElementById('quadrantSubtitle').textContent = subtitle;
             
             // Track positions for overlap detection
@@ -6245,7 +6339,7 @@
             // Filter changes
             document.getElementById('categoryFilter').addEventListener('change', filterRisks);
             document.getElementById('ragFilter').addEventListener('change', filterRisks);
-            document.getElementById('quadrantCategoryFilter').addEventListener('change', updateQuadrantChart);
+            // Category filter now handled by quad-cat-panel checkboxes
 
             // Button clicks
             document.getElementById('mitigationToggle').addEventListener('click', toggleMitigationView);
@@ -6399,6 +6493,61 @@
         }
 
         // ==================== END STRATEGIC OBJECTIVES ====================
+
+
+        // ==================== CATEGORY FILTER PANEL ====================
+
+        const QUAD_CATEGORIES = [
+            { name: 'Strategic & Commercial',           color: '#e74c3c' },
+            { name: 'Financial & Credit',               color: '#e67e22' },
+            { name: 'Operational & Execution',          color: '#f1c40f' },
+            { name: 'Technology & Platform',            color: '#2ecc71' },
+            { name: 'Cybersecurity & Information Security', color: '#3498db' },
+            { name: 'Legal, Regulatory & Compliance',   color: '#9b59b6' },
+        ];
+
+        let _catPanelOpen = false;
+        let _catPanelInitialised = false;
+
+        function initCatPanel() {
+            if (_catPanelInitialised) return;
+            const list = document.getElementById('catFilterList');
+            if (!list) return;
+            list.innerHTML = '';
+            QUAD_CATEGORIES.forEach(cat => {
+                const id = 'cat-' + cat.name.replace(/[^a-z0-9]/gi, '_');
+                const item = document.createElement('label');
+                item.className = 'cat-filter-item';
+                item.innerHTML = `
+                    <input type="checkbox" class="cat-checkbox" id="${id}" value="${cat.name}" checked
+                           onchange="updateQuadrantChart()">
+                    <span class="cat-filter-dot" style="background:${cat.color};"></span>
+                    <span class="cat-filter-label">${cat.name}</span>`;
+                list.appendChild(item);
+            });
+            _catPanelInitialised = true;
+        }
+
+        function toggleCatPanel() {
+            const panel = document.getElementById('quadCatPanel');
+            const btn   = document.getElementById('catFilterToggle');
+            initCatPanel();
+            _catPanelOpen = !_catPanelOpen;
+            if (_catPanelOpen) {
+                panel.classList.remove('hidden');
+                btn.textContent = 'Hide Categories';
+            } else {
+                panel.classList.add('hidden');
+                btn.textContent = 'Select Categories';
+            }
+        }
+
+        function setCatFilterAll(checked) {
+            document.querySelectorAll('.cat-checkbox').forEach(cb => cb.checked = checked);
+            updateQuadrantChart();
+        }
+
+        // ==================== END CATEGORY FILTER PANEL ====================
 
         // ==================== QUADRANT LEGEND TOGGLE ====================
         function toggleQuadLegend() {
