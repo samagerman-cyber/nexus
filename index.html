@@ -5451,6 +5451,45 @@
             }
         }
 
+        function getProximityText(proximity) {
+            switch(proximity) {
+                case 0: return 'Unknown';
+                case 1: return 'Immediate';
+                case 2: return 'Imminent';
+                case 3: return 'Midterm';
+                case 4: return 'Longterm';
+                case 5: return 'SA Review';
+                default: return 'Midterm';
+            }
+        }
+
+        function getLikelihoodText(val) {
+            switch(Number(val)) {
+                case 1: return 'Very Low';
+                case 2: return 'Low';
+                case 3: return 'Medium';
+                case 4: return 'High';
+                case 5: return 'Very High';
+                default: return val;
+            }
+        }
+
+        function getImpactText(val) {
+            switch(Number(val)) {
+                case 1: return 'Very Low';
+                case 2: return 'Low';
+                case 3: return 'Medium';
+                case 4: return 'High';
+                case 5: return 'Very High';
+                default: return val;
+            }
+        }
+
+        function stripMitigationNumber(status) {
+            // Remove leading "N - " pattern e.g. "1 - None" → "None"
+            return (status || '').replace(/^\d+\s*-\s*/, '');
+        }
+
         function getMitigationMultiplier(mitigationStatus) {
             if (mitigationStatus.includes('None')) return 1.00;
             if (mitigationStatus.includes('Identified')) return 0.95;
@@ -5773,7 +5812,8 @@
                             borderWidth: 2,
                             borderDash: [5, 5],
                             pointRadius: 0,
-                            pointHoverRadius: 0
+                            pointHoverRadius: 0,
+                            pointStyle: 'line'
                         }
                     ]
                 },
@@ -5785,7 +5825,18 @@
                             position: 'bottom',
                             labels: {
                                 usePointStyle: true,
-                                padding: 20
+                                pointStyleWidth: 20,
+                                padding: 20,
+                                generateLabels: function(chart) {
+                                    const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                    labels.forEach(label => {
+                                        if (label.text === 'Acceptance Threshold') {
+                                            label.lineDash = [5, 5];
+                                            label.pointStyle = 'line';
+                                        }
+                                    });
+                                    return labels;
+                                }
                             }
                         }
                     },
@@ -5848,12 +5899,12 @@
                     <td>${risk.id}</td>
                     <td>${risk.description}</td>
                     <td>${risk.category}</td>
-                    <td>${risk.likelihood}</td>
-                    <td>${risk.impact}</td>
-                    <td>${proximityLabel}</td>
+                    <td>${getLikelihoodText(risk.likelihood)}</td>
+                    <td>${getImpactText(risk.impact)}</td>
+                    <td>${getProximityText(risk.proximity)}</td>
                     <td><span class="risk-badge ${risk.rag}" title="${risk.rag.toUpperCase()}"></span></td>
                     <td><strong>${riskScore}</strong></td>
-                    <td>${risk.mitigationStatus}</td>
+                    <td>${stripMitigationNumber(risk.mitigationStatus)}</td>
                     <td>${risk.owner}</td>
                     <td>${risk.strategicPriority || 'Not Set'}</td>
                 `;
@@ -6018,7 +6069,7 @@
             // Wrapper: RAG dot to the left + SVG rectangle to the right
             const wrapper = document.createElement('div');
             wrapper.className = 'enhanced-risk-point';
-            wrapper.style.cssText = 'display:flex;align-items:center;gap:3px;background:transparent;border:none;width:auto;height:auto;';
+            wrapper.style.cssText = 'display:flex;align-items:center;gap:0;background:transparent;border:none;width:auto;height:auto;';
 
             if (isOverlapped) {
                 wrapper.style.cssText += 'width:22px;height:22px;';
@@ -6043,18 +6094,31 @@
             const mit = getMitigationSVGSymbol(risk.mitigationStatus);
 
             // ── RAG dot (left of rectangle) ──
-            const ragColors = { red:'#e74c3c', amber:'#f39c12', green:'#27ae60' };
+            const ragColors = { red:'#c0392b', amber:'#d68910', green:'#1e8449' };
             const ragC = ragColors[risk.rag] || '#aaa';
             const dotSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-            dotSvg.setAttribute('width','10'); dotSvg.setAttribute('height','10');
-            dotSvg.setAttribute('viewBox','0 0 10 10');
+            dotSvg.setAttribute('width','20'); dotSvg.setAttribute('height','20');
+            dotSvg.setAttribute('viewBox','0 0 20 20');
             dotSvg.style.flexShrink = '0';
             const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-            circle.setAttribute('cx','5'); circle.setAttribute('cy','5'); circle.setAttribute('r','4.5');
+            circle.setAttribute('cx','10'); circle.setAttribute('cy','10'); circle.setAttribute('r','9');
             circle.setAttribute('fill', ragC);
-            circle.setAttribute('stroke','white'); circle.setAttribute('stroke-width','1');
+            circle.setAttribute('stroke','white'); circle.setAttribute('stroke-width','1.5');
             dotSvg.appendChild(circle);
             wrapper.appendChild(dotSvg);
+
+            // ── Light grey dashed connector ──
+            const connSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            connSvg.setAttribute('width','6'); connSvg.setAttribute('height','20');
+            connSvg.setAttribute('viewBox','0 0 6 20');
+            connSvg.style.flexShrink = '0';
+            const dash = document.createElementNS('http://www.w3.org/2000/svg','line');
+            dash.setAttribute('x1','0'); dash.setAttribute('y1','10');
+            dash.setAttribute('x2','6'); dash.setAttribute('y2','10');
+            dash.setAttribute('stroke','#bbb'); dash.setAttribute('stroke-width','1');
+            dash.setAttribute('stroke-dasharray','2,1.5');
+            connSvg.appendChild(dash);
+            wrapper.appendChild(connSvg);
 
             // ── Main rectangle SVG ──
             const W = 64, H = 22, SPLIT = 46;
