@@ -1151,6 +1151,221 @@
         }
         /* ===== END STRATEGIC OBJECTIVES PANEL ===== */
 
+
+        /* ===== ADD RISK MODAL ===== */
+        .risk-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .risk-modal-overlay.open { display: flex; }
+
+        .risk-modal {
+            background: white;
+            border-radius: 14px;
+            width: 540px;
+            max-width: 95vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+            overflow: hidden;
+            animation: modalIn 0.22s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity:0; transform:scale(0.96) translateY(10px); }
+            to   { opacity:1; transform:scale(1) translateY(0); }
+        }
+
+        .risk-modal-header {
+            background: linear-gradient(135deg, #700d19, #8b1426);
+            color: white;
+            padding: 16px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .risk-modal-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .risk-modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .risk-modal-close:hover { color: white; background: rgba(255,255,255,0.15); }
+
+        /* Tab bar */
+        .risk-modal-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .risk-modal-tab {
+            flex: 1;
+            padding: 11px 16px;
+            background: none;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .risk-modal-tab.active {
+            color: #700d19;
+            background: white;
+        }
+
+        .risk-modal-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0; right: 0;
+            height: 2px;
+            background: #700d19;
+        }
+
+        .risk-modal-tab .tab-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #555;
+            font-size: 10px;
+            font-weight: 700;
+            margin-right: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .risk-modal-tab.active .tab-num { background: #700d19; color: white; }
+
+        /* Tab panels */
+        .risk-modal-body {
+            overflow-y: auto;
+            flex: 1;
+            padding: 20px 22px 8px;
+        }
+
+        .risk-tab-panel { display: none; min-height: 340px; }
+        .risk-tab-panel.active { display: block; min-height: 340px; }
+
+        /* Form grid inside modal */
+        .modal-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 16px;
+        }
+
+        .modal-form-grid .full-width { grid-column: 1 / -1; }
+
+        .modal-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #5d6d7e;
+            margin-bottom: 4px;
+        }
+
+        .modal-field label .req { color: #c0392b; }
+
+        .modal-field input,
+        .modal-field select,
+        .modal-field textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1.5px solid #dce3ea;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 12.5px;
+            font-family: inherit;
+            color: #2c3e50;
+            background: #fafbfc;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+
+        .modal-field input::placeholder,
+        .modal-field textarea::placeholder {
+            font-size: 10.5px;
+            color: #b0bec5;
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus,
+        .modal-field textarea:focus {
+            border-color: #700d19;
+            box-shadow: 0 0 0 3px rgba(112,13,25,0.08);
+            background: white;
+        }
+
+        .modal-field textarea { resize: vertical; min-height: 62px; }
+
+        /* Footer */
+        .risk-modal-footer {
+            padding: 14px 22px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            background: #fafbfc;
+        }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border-radius: 6px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .modal-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+        .modal-btn-commit  { background: linear-gradient(135deg,#27ae60,#1e8449); color:white; }
+        .modal-btn-clear   { background: #e9ecef; color: #555; }
+        .modal-btn-cancel  { background: linear-gradient(135deg,#e74c3c,#c0392b); color:white; margin-left:auto; }
+        .modal-btn-next    { background: linear-gradient(135deg,#2471a3,#1a5276); color:white; margin-left:auto; }
+        .modal-btn-back    { background: #e9ecef; color:#555; }
+
+        .modal-msg {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .modal-msg.success { background:#d4edda; color:#155724; display:block; }
+        .modal-msg.error   { background:#f8d7da; color:#721c24; display:block; }
+        /* ===== END ADD RISK MODAL ===== */
+
         /* Filler rows on short pages */
         .filler-row td {
             border-bottom: 1px solid #f0f0f0 !important;
@@ -2196,32 +2411,34 @@
 
         /* Col 1: Risk ID */
         .risk-table td:nth-child(1), .risk-table th:nth-child(1) { width:7%; white-space:nowrap; }
-        /* Col 2: Description */
-        .risk-table td:nth-child(2), .risk-table th:nth-child(2) { width:11%; max-width:130px; }
-        /* Col 3: Category */
-        .risk-table td:nth-child(3), .risk-table th:nth-child(3) { width:9%; }
-        /* Col 4: Likelihood */
-        .risk-table td:nth-child(4), .risk-table th:nth-child(4) { width:5%; text-align:center; }
-        /* Col 5: Impact */
+        /* Col 2: Date Logged (new) */
+        .risk-table td:nth-child(2), .risk-table th:nth-child(2) { width:7%; white-space:nowrap; }
+        /* Col 3: Description */
+        .risk-table td:nth-child(3), .risk-table th:nth-child(3) { width:10%; max-width:120px; }
+        /* Col 4: Category */
+        .risk-table td:nth-child(4), .risk-table th:nth-child(4) { width:8%; }
+        /* Col 5: Likelihood */
         .risk-table td:nth-child(5), .risk-table th:nth-child(5) { width:5%; text-align:center; }
-        /* Col 6: Proximity */
-        .risk-table td:nth-child(6), .risk-table th:nth-child(6) { width:6%; white-space:nowrap; }
-        /* Col 7: RAG */
-        .risk-table td:nth-child(7), .risk-table th:nth-child(7) { width:4%; text-align:center; }
-        /* Col 8: Risk Score */
-        .risk-table td:nth-child(8), .risk-table th:nth-child(8) { width:5%; text-align:center; }
-        /* Col 9: TARA Threat (new) */
-        .risk-table td:nth-child(9), .risk-table th:nth-child(9) { width:8%; }
-        /* Col 10: Vulnerability (new) */
-        .risk-table td:nth-child(10), .risk-table th:nth-child(10) { width:8%; }
-        /* Col 11: Proposed Mitigation (new) */
-        .risk-table td:nth-child(11), .risk-table th:nth-child(11) { width:9%; }
-        /* Col 12: Mitigation Status */
-        .risk-table td:nth-child(12), .risk-table th:nth-child(12) { width:8%; white-space:nowrap; }
-        /* Col 13: Owner */
-        .risk-table td:nth-child(13), .risk-table th:nth-child(13) { width:8%; }
-        /* Col 14: Strategic Priority */
-        .risk-table td:nth-child(14), .risk-table th:nth-child(14) { width:7%; white-space:nowrap; }
+        /* Col 6: Impact */
+        .risk-table td:nth-child(6), .risk-table th:nth-child(6) { width:5%; text-align:center; }
+        /* Col 7: Proximity */
+        .risk-table td:nth-child(7), .risk-table th:nth-child(7) { width:6%; white-space:nowrap; }
+        /* Col 8: RAG */
+        .risk-table td:nth-child(8), .risk-table th:nth-child(8) { width:4%; text-align:center; }
+        /* Col 9: Risk Score */
+        .risk-table td:nth-child(9), .risk-table th:nth-child(9) { width:5%; text-align:center; }
+        /* Col 10: TARA Threat */
+        .risk-table td:nth-child(10), .risk-table th:nth-child(10) { width:7%; }
+        /* Col 11: Vulnerability */
+        .risk-table td:nth-child(11), .risk-table th:nth-child(11) { width:7%; }
+        /* Col 12: Proposed Mitigation */
+        .risk-table td:nth-child(12), .risk-table th:nth-child(12) { width:8%; }
+        /* Col 13: Mitigation Status */
+        .risk-table td:nth-child(13), .risk-table th:nth-child(13) { width:7%; white-space:nowrap; }
+        /* Col 14: Owner */
+        .risk-table td:nth-child(14), .risk-table th:nth-child(14) { width:7%; }
+        /* Col 15: Strategic Priority */
+        .risk-table td:nth-child(15), .risk-table th:nth-child(15) { width:7%; white-space:nowrap; }
 
         .risk-table tr:hover {
             background: #f8f9fa;
@@ -3042,6 +3259,166 @@
     </style>
 </head>
 <body>
+
+    <!-- Add Risk Modal -->
+    <div class="risk-modal-overlay" id="addRiskModal">
+        <div class="risk-modal">
+            <div class="risk-modal-header">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+                    Add New Risk
+                </h2>
+                <button class="risk-modal-close" onclick="closeAddRiskModal()">✕</button>
+            </div>
+
+            <div class="risk-modal-tabs">
+                <button class="risk-modal-tab active" id="modalTab1" onclick="switchModalTab(1)">
+                    <span class="tab-num">1</span> Risk Details
+                </button>
+                <button class="risk-modal-tab" id="modalTab2" onclick="switchModalTab(2)">
+                    <span class="tab-num">2</span> Mitigation &amp; Ownership
+                </button>
+            </div>
+
+            <div class="risk-modal-body">
+                <!-- Tab 1 -->
+                <div class="risk-tab-panel active" id="modalPanel1">
+                    <div class="modal-form-grid">
+                        <div class="modal-field full-width">
+                            <label>Risk Description <span class="req">*</span></label>
+                            <textarea id="m_description" required placeholder="Describe the risk clearly and concisely…" rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>TARA Threat</label>
+                            <textarea id="m_taraThreat" placeholder="Threat description…" rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Vulnerability</label>
+                            <textarea id="m_vulnerability" placeholder="Vulnerability detail…" rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Risk Category <span class="req">*</span></label>
+                            <select id="m_category" required>
+                                <option value="">Select…</option>
+                                <option>Strategic &amp; Commercial</option>
+                                <option>Financial &amp; Credit</option>
+                                <option>Operational &amp; Execution</option>
+                                <option>Technology &amp; Platform</option>
+                                <option>Cybersecurity &amp; Information Security</option>
+                                <option>Legal, Regulatory &amp; Compliance</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Strategic Priority</label>
+                            <select id="m_strategic">
+                                <option value="">Select…</option>
+                                <option>Customer</option>
+                                <option>Investor</option>
+                                <option>Finance</option>
+                                <option>Technology</option>
+                                <option>Operations</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Likelihood <span class="req">*</span></label>
+                            <select id="m_likelihood" required>
+                                <option value="">Select…</option>
+                                <option value="1">1 – Unlikely</option>
+                                <option value="2">2 – Possible</option>
+                                <option value="3">3 – Likely</option>
+                                <option value="4">4 – Very likely</option>
+                                <option value="5">5 – Certain</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Impact <span class="req">*</span></label>
+                            <select id="m_impact" required>
+                                <option value="">Select…</option>
+                                <option value="1">1 – Negligible</option>
+                                <option value="2">2 – Light</option>
+                                <option value="3">3 – Medium</option>
+                                <option value="4">4 – Severe</option>
+                                <option value="5">5 – Catastrophic</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Proximity</label>
+                            <select id="m_proximity">
+                                <option value="">Select…</option>
+                                <option value="0">0 – Unknown</option>
+                                <option value="1">1 – Immediate</option>
+                                <option value="2">2 – Imminent</option>
+                                <option value="3">3 – Midterm</option>
+                                <option value="4">4 – Longterm</option>
+                                <option value="5">5 – SA Review</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2 -->
+                <div class="risk-tab-panel" id="modalPanel2">
+                    <div class="modal-form-grid">
+                        <div class="modal-field full-width">
+                            <label>Proposed Mitigation</label>
+                            <textarea id="m_mitigation" placeholder="Describe mitigation actions…" rows="2"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Mitigation Status</label>
+                            <select id="m_mitigationStatus">
+                                <option value="">Select…</option>
+                                <option value="1 - None">None</option>
+                                <option value="2 - Identified">Identified</option>
+                                <option value="3 - Planned">Planned</option>
+                                <option value="4 - Implemented">Implemented</option>
+                                <option value="5 - Validated">Validated</option>
+                                <option value="6 - Fully mitigated">Fully mitigated</option>
+                                <option value="7 - Eliminated">Eliminated</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Risk Owner</label>
+                            <select id="m_owner">
+                                <option value="">Select…</option>
+                                <option>CEO (James Rose)</option>
+                                <option>CCO (James Staargaard)</option>
+                                <option>President (Karl Johnson)</option>
+                                <option>CFO (Neil Stewart)</option>
+                                <option>COO (Elizabeth Williams)</option>
+                                <option>CTO/CRO (Alston German)</option>
+                                <option>CDO (Doug Ash)</option>
+                                <option>Treasurer (Alison Dolin)</option>
+                                <option>Finance (JoAnne Tompson)</option>
+                                <option>VP Sales (Mike Newall)</option>
+                                <option>Unassigned</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Actionee</label>
+                            <input type="text" id="m_actionee" placeholder="Person responsible…">
+                        </div>
+                        <div class="modal-field full-width">
+                            <label>Comments</label>
+                            <textarea id="m_comments" placeholder="Additional notes…" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-msg" id="modalMsg"></div>
+                </div>
+            </div>
+
+            <!-- Footer changes per tab -->
+            <div class="risk-modal-footer" id="modalFooter1">
+                <button class="modal-btn modal-btn-next" onclick="switchModalTab(2)" style="margin-left:0;margin-right:auto;">Next →</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeAddRiskModal()" style="margin-left:auto;">Cancel</button>
+            </div>
+            <div class="risk-modal-footer" id="modalFooter2" style="display:none;">
+                <button class="modal-btn modal-btn-commit" onclick="commitRiskModal()">✓ Commit</button>
+                <button class="modal-btn modal-btn-clear" onclick="clearRiskModal()">Clear Form</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeAddRiskModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conflict Resolution Modal -->
     <div id="conflictModal" class="conflict-modal">
         <div class="conflict-modal-content">
@@ -3086,7 +3463,7 @@
                 <div class="sidebar-divider"></div>
                 <!-- Risk Register -->
                 <button class="sidebar-icon-btn" id="sidebarRegister" onclick="sidebarNav('register')" title="Risk Register">
-                    <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 4h18v2H3zm0 4h12v2H3zm0 4h12v2H3zm0 4h8v2H3z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-8-2H7v-2h4v2zm6-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                     <span class="icon-label">Register</span>
                 </button>
                 <!-- Dashboard -->
@@ -3502,6 +3879,7 @@
                         <thead>
                             <tr>
                                 <th>Risk ID</th>
+                                <th>Date Logged</th>
                                 <th>Description</th>
                                 <th>Category</th>
                                 <th>Likelihood</th>
@@ -6265,8 +6643,22 @@
                         ? `<span class="trunc-cell" title="${s.replace(/"/g,'&quot;')}">${s.slice(0,len)}…</span>`
                         : `<span>${s}</span>`;
                 }
+                // Extract date and truncated ID from risk.id (format: PREFIX-YYYYMMDD)
+                function extractRiskDisplay(id) {
+                    const s = String(id || '');
+                    // Last segment after final hyphen if it looks like YYYYMMDD (8 digits)
+                    const m = s.match(/^(.*)-(\d{8})$/);
+                    if (m) {
+                        const y = m[2].slice(0,4), mo = m[2].slice(4,6), d = m[2].slice(6,8);
+                        return { shortId: m[1], dateStr: d + '/' + mo + '/' + y };
+                    }
+                    return { shortId: s, dateStr: '' };
+                }
+                const { shortId, dateStr } = extractRiskDisplay(risk.id);
+
                 row.innerHTML = `
-                    <td>${risk.id}</td>
+                    <td>${shortId}</td>
+                    <td>${dateStr}</td>
                     <td>${tc(risk.description, 30)}</td>
                     <td>${tc(risk.category, 20)}</td>
                     <td>${getLikelihoodText(risk.likelihood)}</td>
@@ -6289,7 +6681,7 @@
             for (let i = 0; i < fillerCount; i++) {
                 const filler = document.createElement('tr');
                 filler.className = 'filler-row';
-                filler.innerHTML = '<td colspan="14">&nbsp;</td>';
+                filler.innerHTML = '<td colspan="15">&nbsp;</td>';
                 tbody.appendChild(filler);
             }
 
@@ -6851,18 +7243,99 @@
 
         // ==================== ADD RISK PANEL TOGGLE ====================
         function toggleAddRiskPanel() {
-            const panel = document.getElementById('addRiskPanel');
-            const btn = document.querySelector('.excel-btn.success');
-            const isVisible = panel.style.display !== 'none';
-            if (isVisible) {
-                panel.style.display = 'none';
-                btn.innerHTML = '➕ Add New Risk';
-            } else {
-                panel.style.display = 'block';
-                btn.innerHTML = '✖ Close Add Risk';
-                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            openAddRiskModal();
         }
+
+        function openAddRiskModal() {
+            document.getElementById('addRiskModal').classList.add('open');
+            switchModalTab(1);
+        }
+
+        function closeAddRiskModal() {
+            document.getElementById('addRiskModal').classList.remove('open');
+        }
+
+        function switchModalTab(n) {
+            [1,2].forEach(i => {
+                document.getElementById('modalTab' + i).classList.toggle('active', i === n);
+                document.getElementById('modalPanel' + i).classList.toggle('active', i === n);
+                document.getElementById('modalFooter' + i).style.display = i === n ? 'flex' : 'none';
+            });
+        }
+
+        function clearRiskModal() {
+            ['m_description','m_category','m_strategic','m_likelihood','m_impact','m_proximity',
+             'm_taraThreat','m_vulnerability','m_mitigation','m_mitigationStatus',
+             'm_owner','m_actionee','m_comments'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const msg = document.getElementById('modalMsg');
+            if (msg) { msg.className = 'modal-msg'; msg.textContent = ''; }
+        }
+
+        function commitRiskModal() {
+            // Validate required fields
+            const desc = document.getElementById('m_description').value.trim();
+            const cat  = document.getElementById('m_category').value;
+            const lik  = document.getElementById('m_likelihood').value;
+            const imp  = document.getElementById('m_impact').value;
+            const msg  = document.getElementById('modalMsg');
+
+            if (!desc || !cat || !lik || !imp) {
+                // Switch to tab 1 to show errors if needed
+                if (!desc || !cat || !lik || !imp) switchModalTab(1);
+                msg.className = 'modal-msg error';
+                msg.textContent = 'Please fill in all required fields (marked *).';
+                switchModalTab(2); // show message on tab 2
+                return;
+            }
+
+            const formData = {
+                description:      desc,
+                category:         cat,
+                strategicPriority: document.getElementById('m_strategic').value,
+                likelihood:       parseInt(lik),
+                impact:           parseInt(imp),
+                proximity:        parseInt(document.getElementById('m_proximity').value) || 3,
+                taraThreat:       document.getElementById('m_taraThreat').value.trim(),
+                vulnerability:    document.getElementById('m_vulnerability').value.trim(),
+                mitigation:       document.getElementById('m_mitigation').value.trim(),
+                mitigationStatus: document.getElementById('m_mitigationStatus').value || '1 - None',
+                owner:            document.getElementById('m_owner').value,
+                actioneeName:     document.getElementById('m_actionee').value.trim(),
+                comments:         document.getElementById('m_comments').value.trim(),
+            };
+
+            formData.rag = calculateRAG(formData.likelihood, formData.impact, formData.proximity, formData.mitigationStatus);
+            formData.riskScore = calculateRiskScore(formData.likelihood, formData.impact, formData.proximity, formData.mitigationStatus);
+
+            // Generate ID with today's date suffix
+            const today = new Date();
+            const dateSuffix = today.getFullYear().toString()
+                + String(today.getMonth()+1).padStart(2,'0')
+                + String(today.getDate()).padStart(2,'0');
+            formData.id = generateRiskId(formData.category) + '-' + dateSuffix;
+            formData.lastModified = today.toISOString();
+
+            risks.push(formData);
+            localStorage.setItem('risks', JSON.stringify(risks));
+            updateDashboard();
+            updateRiskTable();
+            updateQuadrantChart();
+
+            msg.className = 'modal-msg success';
+            msg.textContent = 'Risk added successfully!';
+            setTimeout(() => {
+                clearRiskModal();
+                closeAddRiskModal();
+            }, 1200);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('addRiskModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddRiskModal();
+        });
 
         // ==================== EVENT LISTENERS ====================
 
