@@ -1169,7 +1169,8 @@
             border-radius: 14px;
             width: 540px;
             max-width: 95vw;
-            max-height: 90vh;
+            height: 620px;
+            max-height: 95vh;
             display: flex;
             flex-direction: column;
             box-shadow: 0 24px 60px rgba(0,0,0,0.25);
@@ -1269,10 +1270,15 @@
             overflow-y: auto;
             flex: 1;
             padding: 20px 22px 8px;
+            overflow-y: auto;
         }
 
-        .risk-tab-panel { display: none; min-height: 340px; }
-        .risk-tab-panel.active { display: block; min-height: 340px; }
+        .risk-tab-panel {
+            display: none;
+        }
+        .risk-tab-panel.active {
+            display: block;
+        }
 
         /* Form grid inside modal */
         .modal-form-grid {
@@ -6152,20 +6158,27 @@
         // ==================== RISK CALCULATION FUNCTIONS ====================
 
         function generateRiskId(category) {
+            // Format: AAA-NNNN-ZZZZ-DDDDDDDD
             const categoryMap = {
-                'Strategic & Commercial': 'SCM',
-                'Financial & Credit': 'FNC',
-                'Operational & Execution': 'OEX',
-                'Technology & Platform': 'TPL',
-                'Cybersecurity & Information Security': 'CIS',
-                'Legal, Regulatory & Compliance': 'LRC'
+                'Strategic & Commercial':               'STR',
+                'Financial & Credit':                   'FIN',
+                'Operational & Execution':              'OPS',
+                'Technology & Platform':                'TEC',
+                'Cybersecurity & Information Security': 'CYB',
+                'Legal, Regulatory & Compliance':       'LEG'
             };
-            
             const prefix = categoryMap[category] || 'GEN';
-            const number = String(risks.length + 1).padStart(4, '0');
-            const suffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            return `${prefix}${number}-${suffix}`;
+            const serial = String(risks.length + 1).padStart(4, '0');
+            // 4-char random alphanumeric
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let rand = '';
+            for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+            // Date suffix (hidden from display, used for Date Logged)
+            const today = new Date();
+            const date = today.getFullYear().toString()
+                + String(today.getMonth()+1).padStart(2,'0')
+                + String(today.getDate()).padStart(2,'0');
+            return prefix + '-' + serial + '-' + rand + '-' + date;
         }
 
         function getProximityMultiplier(proximity) {
@@ -6617,7 +6630,17 @@
         let _currentRisks = [];
 
         function updateRiskTable(filteredRisks = null) {
-            _currentRisks = filteredRisks || risks;
+            const base = filteredRisks || risks;
+            // Sort newest first using the DDDDDDDD date in the Risk ID
+            _currentRisks = [...base].sort((a, b) => {
+                const da = (String(a.id || '').match(/(\d{8})$/) || ['0'])[0];
+                const db = (String(b.id || '').match(/(\d{8})$/) || ['0'])[0];
+                // If no date in ID, fall back to lastModified
+                if (da === '0' && db === '0') {
+                    return new Date(b.lastModified||0) - new Date(a.lastModified||0);
+                }
+                return db.localeCompare(da); // lexicographic descending works for YYYYMMDD
+            });
             _currentPage = 1;
             renderPage();
         }
@@ -7312,10 +7335,7 @@
 
             // Generate ID with today's date suffix
             const today = new Date();
-            const dateSuffix = today.getFullYear().toString()
-                + String(today.getMonth()+1).padStart(2,'0')
-                + String(today.getDate()).padStart(2,'0');
-            formData.id = generateRiskId(formData.category) + '-' + dateSuffix;
+            formData.id = generateRiskId(formData.category);
             formData.lastModified = today.toISOString();
 
             risks.push(formData);
