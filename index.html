@@ -566,7 +566,7 @@
             gap: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             box-sizing: border-box;
-            height: 160px;
+            height: 100px;
         }
 
         .week-nav-btn {
@@ -636,7 +636,8 @@
             gap: 6px;
             justify-content: center;
             margin-top: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            align-items: center;
         }
 
         .week-inline-btn {
@@ -1151,6 +1152,89 @@
         }
         /* ===== END STRATEGIC OBJECTIVES PANEL ===== */
 
+
+
+        /* ===== RIBBON MENU ===== */
+        .ribbon {
+            display: flex;
+            align-items: center;
+            background: #f0f2f5;
+            border-bottom: 2px solid #dce3ea;
+            padding: 0 16px;
+            gap: 8px;
+            flex-wrap: nowrap;
+            min-height: 52px;
+            flex-shrink: 0;
+        }
+
+        .ribbon-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #7f8c8d;
+            white-space: nowrap;
+            padding-right: 8px;
+            border-right: 1px solid #dce3ea;
+            margin-right: 4px;
+        }
+
+        .ribbon-sep {
+            width: 1px;
+            height: 28px;
+            background: #dce3ea;
+            flex-shrink: 0;
+        }
+
+        /* Unified ribbon button */
+        .rbtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 34px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .rbtn:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+        .rbtn:active { transform: translateY(0); filter: brightness(0.96); }
+        .rbtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; filter: none !important; }
+
+        /* Ribbon button colour variants */
+        .rbtn-primary   { background: linear-gradient(135deg,#2471a3,#1a5276); color:white; }
+        .rbtn-success   { background: linear-gradient(135deg,#27ae60,#1e8449); color:white; }
+        .rbtn-danger    { background: linear-gradient(135deg,#e74c3c,#c0392b); color:white; }
+        .rbtn-neutral   { background: linear-gradient(135deg,#7f8c8d,#5d6d7e); color:white; }
+        .rbtn-purple    { background: linear-gradient(135deg,#9b59b6,#8e44ad); color:white; }
+        .rbtn-amber     { background: linear-gradient(135deg,#d68910,#b7770d); color:white; }
+
+        .rbtn-toggle    { background: white; border: 1.5px solid #bdc3c7; color:#2c3e50; }
+        .rbtn-toggle:hover { background:#f8f9fa; }
+        .rbtn-toggle.on { background: linear-gradient(135deg,#e67e22,#d35400); color:white; border-color:transparent; }
+
+        /* Ribbon filter selects */
+        .ribbon-select {
+            height: 34px;
+            padding: 0 28px 0 10px;
+            border: 1.5px solid #bdc3c7;
+            border-radius: 5px;
+            background: white;
+            font-size: 12px;
+            color: #2c3e50;
+            cursor: pointer;
+            outline: none;
+            appearance: auto;
+        }
+        .ribbon-select:focus { border-color: #2471a3; }
+
+        /* ===== END RIBBON MENU ===== */
 
         /* ===== ADD RISK MODAL ===== */
         .risk-modal-overlay {
@@ -3425,6 +3509,167 @@
         </div>
     </div>
 
+
+    <!-- Edit Risk Modal -->
+    <div class="risk-modal-overlay" id="editRiskModal">
+        <div class="risk-modal">
+            <div class="risk-modal-header">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Edit Risk
+                </h2>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span id="editRiskIdDisplay" style="font-size:12px;opacity:0.8;font-family:monospace;"></span>
+                    <button class="risk-modal-close" onclick="closeEditRiskModal()">✕</button>
+                </div>
+            </div>
+
+            <div class="risk-modal-tabs">
+                <button class="risk-modal-tab active" id="editModalTab1" onclick="switchEditModalTab(1)">
+                    <span class="tab-num">1</span> Risk Details
+                </button>
+                <button class="risk-modal-tab" id="editModalTab2" onclick="switchEditModalTab(2)">
+                    <span class="tab-num">2</span> Mitigation &amp; Ownership
+                </button>
+            </div>
+
+            <div class="risk-modal-body">
+                <!-- Tab 1 -->
+                <div class="risk-tab-panel active" id="editModalPanel1">
+                    <div class="modal-form-grid">
+                        <div class="modal-field full-width">
+                            <label>Risk Description <span class="req">*</span></label>
+                            <textarea id="e_description" required rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>TARA Threat</label>
+                            <textarea id="e_taraThreat" rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Vulnerability</label>
+                            <textarea id="e_vulnerability" rows="3"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Risk Category <span class="req">*</span></label>
+                            <select id="e_category" required>
+                                <option value="">Select…</option>
+                                <option>Strategic &amp; Commercial</option>
+                                <option>Financial &amp; Credit</option>
+                                <option>Operational &amp; Execution</option>
+                                <option>Technology &amp; Platform</option>
+                                <option>Cybersecurity &amp; Information Security</option>
+                                <option>Legal, Regulatory &amp; Compliance</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Strategic Priority</label>
+                            <select id="e_strategic">
+                                <option value="">Select…</option>
+                                <option>Customer</option>
+                                <option>Investor</option>
+                                <option>Finance</option>
+                                <option>Technology</option>
+                                <option>Operations</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Likelihood <span class="req">*</span></label>
+                            <select id="e_likelihood" required>
+                                <option value="">Select…</option>
+                                <option value="1">1 – Unlikely</option>
+                                <option value="2">2 – Possible</option>
+                                <option value="3">3 – Likely</option>
+                                <option value="4">4 – Very likely</option>
+                                <option value="5">5 – Certain</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Impact <span class="req">*</span></label>
+                            <select id="e_impact" required>
+                                <option value="">Select…</option>
+                                <option value="1">1 – Negligible</option>
+                                <option value="2">2 – Light</option>
+                                <option value="3">3 – Medium</option>
+                                <option value="4">4 – Severe</option>
+                                <option value="5">5 – Catastrophic</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Proximity</label>
+                            <select id="e_proximity">
+                                <option value="">Select…</option>
+                                <option value="0">0 – Unknown</option>
+                                <option value="1">1 – Immediate</option>
+                                <option value="2">2 – Imminent</option>
+                                <option value="3">3 – Midterm</option>
+                                <option value="4">4 – Longterm</option>
+                                <option value="5">5 – SA Review</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2 -->
+                <div class="risk-tab-panel" id="editModalPanel2">
+                    <div class="modal-form-grid">
+                        <div class="modal-field full-width">
+                            <label>Proposed Mitigation</label>
+                            <textarea id="e_mitigation" rows="2"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Mitigation Status</label>
+                            <select id="e_mitigationStatus">
+                                <option value="">Select…</option>
+                                <option value="1 - None">None</option>
+                                <option value="2 - Identified">Identified</option>
+                                <option value="3 - Planned">Planned</option>
+                                <option value="4 - Implemented">Implemented</option>
+                                <option value="5 - Validated">Validated</option>
+                                <option value="6 - Fully mitigated">Fully mitigated</option>
+                                <option value="7 - Eliminated">Eliminated</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Risk Owner</label>
+                            <select id="e_owner">
+                                <option value="">Select…</option>
+                                <option>CEO (James Rose)</option>
+                                <option>CCO (James Staargaard)</option>
+                                <option>President (Karl Johnson)</option>
+                                <option>CFO (Neil Stewart)</option>
+                                <option>COO (Elizabeth Williams)</option>
+                                <option>CTO/CRO (Alston German)</option>
+                                <option>CDO (Doug Ash)</option>
+                                <option>Treasurer (Alison Dolin)</option>
+                                <option>Finance (JoAnne Tompson)</option>
+                                <option>VP Sales (Mike Newall)</option>
+                                <option>Unassigned</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Actionee</label>
+                            <input type="text" id="e_actionee">
+                        </div>
+                        <div class="modal-field full-width">
+                            <label>Comments</label>
+                            <textarea id="e_comments" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-msg" id="editModalMsg"></div>
+                </div>
+            </div>
+
+            <div class="risk-modal-footer" id="editModalFooter1">
+                <button class="modal-btn modal-btn-next" onclick="switchEditModalTab(2)" style="margin-left:0;margin-right:auto;">Next →</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeEditRiskModal()" style="margin-left:auto;">Cancel</button>
+            </div>
+            <div class="risk-modal-footer" id="editModalFooter2" style="display:none;">
+                <button class="modal-btn modal-btn-commit" onclick="saveEditRiskModal()">✓ Save Changes</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeEditRiskModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conflict Resolution Modal -->
     <div id="conflictModal" class="conflict-modal">
         <div class="conflict-modal-content">
@@ -3525,22 +3770,17 @@
                             <h1>TARA Risk Management System</h1>
                             <p>Threat Assessment &amp; Risk Analysis Platform</p>
                         </div>
-                        <div class="nav-tabs">
-                            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
-                            <button class="nav-tab" data-tab="register">Risk Register</button>
-                            <button class="nav-tab" data-tab="business-plan">Business Plan Review</button>
-                            <button class="nav-tab" data-tab="quadrant">Quadrant Chart</button>
-                        </div>
                         <div class="content">
             <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-content active">
+                <!-- Dashboard Ribbon -->
+                <div class="ribbon">
+                    <span class="ribbon-label">Dashboard</span>
+                    <button class="rbtn rbtn-purple" onclick="toggleRadar()">
+                        <span id="radarToggleText">Show Risk Radar</span>
+                    </button>
+                </div>
                 <div class="dashboard-layout">
-                    <!-- Risk Radar Toggle (Fixed at Top) -->
-                    <div class="radar-toggle-container">
-                        <button class="radar-toggle-btn" onclick="toggleRadar()">
-                            <span id="radarToggleText">Show Risk Radar</span>
-                        </button>
-                    </div>
 
                     <!-- Risk Categories Section with Simple Table -->
                     <div class="risk-categories-section">
@@ -3709,23 +3949,30 @@
 
             <!-- Risk Register Tab -->
             <div id="register" class="tab-content">
-                <!-- Excel Import/Export Section -->
-                <div class="excel-controls">
-                    <h3>📊 Excel Import/Export</h3>
-                    <div class="excel-buttons">
-                        <button class="excel-btn primary" id="refreshRisksBtn" onclick="refreshRisksFromGoogleSheets()">
-                            🔄 Refresh Risks
-                        </button>
-                        <button class="excel-btn success" onclick="toggleAddRiskPanel()">
-                            ➕ Add New Risk
-                        </button>
-                        <button class="excel-btn secondary" onclick="exportToExcel()">
-                            📤 Export to Excel
-                        </button>
-                        <button class="excel-btn danger" onclick="clearAllRisks()">
-                            🗑️ Clear All Risks
-                        </button>
-                    </div>
+                <!-- Risk Register Ribbon -->
+                <div class="ribbon">
+                    <span class="ribbon-label">Risk Register</span>
+                    <select class="ribbon-select" id="categoryFilter" onchange="filterRisks()">
+                        <option value="">All Categories</option>
+                        <option value="Strategic &amp; Commercial">Strategic &amp; Commercial</option>
+                        <option value="Financial &amp; Credit">Financial &amp; Credit</option>
+                        <option value="Operational &amp; Execution">Operational &amp; Execution</option>
+                        <option value="Technology &amp; Platform">Technology &amp; Platform</option>
+                        <option value="Cybersecurity &amp; Information Security">Cybersecurity &amp; Information Security</option>
+                        <option value="Legal, Regulatory &amp; Compliance">Legal, Regulatory &amp; Compliance</option>
+                    </select>
+                    <select class="ribbon-select" id="ragFilter" onchange="filterRisks()">
+                        <option value="">All RAG</option>
+                        <option value="red">Red</option>
+                        <option value="amber">Amber</option>
+                        <option value="green">Green</option>
+                    </select>
+                    <div class="ribbon-sep"></div>
+                    <button class="rbtn rbtn-primary" id="refreshRisksBtn" onclick="refreshRisksFromGoogleSheets()">🔄 Refresh Risks</button>
+                    <button class="rbtn rbtn-success" onclick="toggleAddRiskPanel()">➕ Add New Risk</button>
+                    <button class="rbtn rbtn-danger" onclick="clearAllRisks()">🗑️ Clear All Risks</button>
+                    <button class="rbtn rbtn-amber" id="saReviewBtn" onclick="filterSAReview()">📋 SA Review</button>
+                    <button class="rbtn rbtn-neutral" onclick="exportToExcel()">📤 Export to Excel</button>
                 </div>
 
 
@@ -3857,29 +4104,7 @@
                 </form>
                 </div>
 
-                <div class="controls">
-                    <h2>Risk Register</h2>
-                    <div class="filter-group">
-                        <select id="categoryFilter">
-                            <option value="">All Categories</option>
-                            <option value="Strategic & Commercial">Strategic & Commercial</option>
-                            <option value="Financial & Credit">Financial & Credit</option>
-                            <option value="Operational & Execution">Operational & Execution</option>
-                            <option value="Technology & Platform">Technology & Platform</option>
-                            <option value="Cybersecurity & Information Security">Cybersecurity & Information Security</option>
-                            <option value="Legal, Regulatory & Compliance">Legal, Regulatory & Compliance</option>
-                        </select>
-                        <select id="ragFilter">
-                            <option value="">All RAG Status</option>
-                            <option value="red">Red</option>
-                            <option value="amber">Amber</option>
-                            <option value="green">Green</option>
-                        </select>
-                        <button class="excel-btn success" id="saReviewBtn" onclick="filterSAReview()">
-                            📋 SA Review
-                        </button>
-                    </div>
-                </div>
+
                 <div class="table-container" id="riskTableContainer">
                     <table class="risk-table" id="riskTable">
                         <thead>
@@ -3916,27 +4141,30 @@
             <!-- Add Risk Tab -->
 
             <div id="business-plan" class="tab-content">
+                <!-- BPR Ribbon -->
+                <div class="ribbon">
+                    <span class="ribbon-label">Business Plan Review</span>
+                    <button class="rbtn rbtn-primary" id="importRisksBtn" onclick="refreshBPRFromGoogleSheets()">🔄 Refresh BPR Items</button>
+                    <button class="rbtn rbtn-danger" id="clearRisksBtn" onclick="clearImportedRisks()">🗑️ Clear SA Risks</button>
+                    <div class="ribbon-sep"></div>
+                    <button class="rbtn rbtn-toggle" id="meetingModeBtn" onclick="toggleMeetingMode()">
+                        Meeting Mode <span class="toggle-status" id="meetingModeStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span>
+                    </button>
+                    <button class="rbtn rbtn-toggle" id="saItemsBtn" onclick="toggleSAItems()">
+                        Include SA Risks <span class="toggle-status" id="saItemsStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span>
+                    </button>
+                </div>
                 <!-- Week Navigation -->
                 <div class="week-navigation-container">
                     <div class="week-navigation-row">
-                        <!-- LEFT COL: warning + toggles (fixed 220px) -->
-                        <div class="left-nav-col">
+                        <!-- LEFT COL: warning box only (toggles moved to ribbon) -->
+                        <div class="left-nav-col" style="justify-content:center;">
                             <div class="historical-warning" id="historicalWarning">
                                 <div class="historical-warning-icon">⚠️</div>
                                 <div class="historical-warning-text">Note: You're viewing historical data which cannot be updated.</div>
                             </div>
-                            <div class="meeting-mode-toggle">
-                                <button class="meeting-mode-btn" id="meetingModeBtn" onclick="toggleMeetingMode()">
-                                    <span class="toggle-label">Meeting Mode</span>
-                                    <span class="toggle-status" id="meetingModeStatus">OFF</span>
-                                </button>
-                                <button class="sa-items-btn" id="saItemsBtn" onclick="toggleSAItems()">
-                                    <span class="toggle-label">Include SA risks</span>
-                                    <span class="toggle-status" id="saItemsStatus">OFF</span>
-                                </button>
-                            </div>
                         </div>
-                        <!-- CENTRE COL: week nav box (fixed 360px x 160px) -->
+                        <!-- CENTRE COL: week nav box -->
                         <div class="week-navigation">
                             <button class="week-nav-btn" id="prevWeekBtn" onclick="navigateToPreviousWeek()">◀</button>
                             <div class="week-display">
@@ -3950,17 +4178,8 @@
                             </div>
                             <button class="week-nav-btn" id="nextWeekBtn" onclick="navigateToNextWeek()">▶</button>
                         </div>
-                        <!-- RIGHT COL: action buttons (fixed 200px) -->
-                        <div class="right-nav-col">
-                            <div class="bpr-action-buttons">
-                                <button class="bpr-action-btn import" id="importRisksBtn">
-                                    <span class="toggle-label">Refresh BPR Items</span>
-                                </button>
-                                <button class="bpr-action-btn clear" id="clearRisksBtn">
-                                    <span class="toggle-label">Clear SA Risks</span>
-                                </button>
-                            </div>
-                        </div>
+                        <!-- RIGHT COL: spacer for symmetry -->
+                        <div class="right-nav-col"></div>
                     </div>
                 </div>
 
@@ -4292,6 +4511,13 @@
 
             <!-- Quadrant Chart Tab -->
             <div id="quadrant" class="tab-content">
+                <!-- Quadrant Ribbon -->
+                <div class="ribbon">
+                    <span class="ribbon-label">Quadrant Chart</span>
+                    <button class="rbtn rbtn-purple" id="catFilterToggle" onclick="toggleCatPanel()">Select Categories</button>
+                    <button class="rbtn rbtn-toggle" id="mitigationToggle">Show Post-Mitigation</button>
+                    <button class="rbtn rbtn-toggle" id="legendToggle" onclick="toggleQuadLegend()">Hide Legend</button>
+                </div>
                 <div class="quadrant-header" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;">
                     <div class="quadrant-title-bar">
                         <h1 class="quadrant-title">Likelihood vs Impact</h1>
@@ -4300,21 +4526,7 @@
                         <span class="quadrant-subtitle" id="quadrantSubtitle">All Categories (5)</span>
                     </div>
                 </div>
-
                 <div class="quadrant-main-container">
-                    <div class="quadrant-controls" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;justify-content:flex-start;">
-                        <div class="filter-group">
-                            <button class="toggle-btn" id="catFilterToggle" onclick="toggleCatPanel()">
-                                Select Categories
-                            </button>
-                            <button class="toggle-btn" id="mitigationToggle">
-                                Show Post-Mitigation
-                            </button>
-                            <button class="toggle-btn" id="legendToggle" onclick="toggleQuadLegend()">
-                                Hide Legend
-                            </button>
-                        </div>
-                    </div>
 
                     <div class="quadrant-content">
                         <div class="quadrant-chart-wrapper">
@@ -4651,12 +4863,12 @@
             const statusSpan = document.getElementById('saItemsStatus');
             
             if (includeSAItems) {
-                btn.classList.add('active');
+                btn.classList.add('on');
                 statusSpan.textContent = 'ON';
                 // Import SA review risks
                 importSAItemsAutomatically();
             } else {
-                btn.classList.remove('active');
+                btn.classList.remove('on');
                 statusSpan.textContent = 'OFF';
                 // Clear SA review risks
                 clearSAItemsAutomatically();
@@ -4962,7 +5174,7 @@
             
             // Disable SA Items button for historical weeks
             if (!isCurrentWeekEditable()) {
-                saItemsBtn.disabled = true;
+                if (saItemsBtn) saItemsBtn.disabled = true;
                 // If we're on a historical week and SA Items was ON, turn it off
                 if (includeSAItems) {
                     includeSAItems = false;
@@ -4970,7 +5182,7 @@
                     document.getElementById('saItemsStatus').textContent = 'OFF';
                 }
             } else {
-                saItemsBtn.disabled = false;
+                if (saItemsBtn) saItemsBtn.disabled = false;
             }
             
             // Show/hide warning icon and inline buttons
@@ -5018,8 +5230,10 @@
             });
             
             // Disable/enable import and clear buttons
-            document.getElementById('importRisksBtn').disabled = !isEditable;
-            document.getElementById('clearRisksBtn').disabled = !isEditable;
+            const importBtn = document.getElementById('importRisksBtn');
+            const clearBtn = document.getElementById('clearRisksBtn');
+            if (importBtn) importBtn.disabled = !isEditable;
+            if (clearBtn) clearBtn.disabled = !isEditable;
         }
 
         /**
@@ -6318,12 +6532,7 @@
                 tab.classList.remove('active');
             });
             
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
             document.getElementById(tabName).classList.add('active');
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
             
             if (tabName === 'dashboard') {
                 updateDashboard();
@@ -6626,7 +6835,7 @@
 
         // ── Pagination state ──
         let _currentPage = 1;
-        const PAGE_SIZE = 10;
+        const PAGE_SIZE = 20;
         let _currentRisks = [];
 
         function updateRiskTable(filteredRisks = null) {
@@ -6680,7 +6889,7 @@
                 const { shortId, dateStr } = extractRiskDisplay(risk.id);
 
                 row.innerHTML = `
-                    <td>${shortId}</td>
+                    <td style="cursor:pointer;" ondblclick="openEditRiskModal('${risk.id.replace(/'/g,'&apos;')}')" title="Double-click to edit">${shortId}</td>
                     <td>${dateStr}</td>
                     <td>${tc(risk.description, 30)}</td>
                     <td>${tc(risk.category, 20)}</td>
@@ -7199,10 +7408,10 @@
             
             if (showPostMitigation) {
                 toggleBtn.textContent = 'Show Current';
-                toggleBtn.classList.add('active');
+                toggleBtn.classList.add('on');
             } else {
                 toggleBtn.textContent = 'Show Post-Mitigation';
-                toggleBtn.classList.remove('active');
+                toggleBtn.classList.remove('on');
             }
             
             updateQuadrantChart();
@@ -7427,8 +7636,8 @@
             });
 
             // Business Plan Review buttons
-            document.getElementById('importRisksBtn').addEventListener('click', refreshBPRFromGoogleSheets);
-            document.getElementById('clearRisksBtn').addEventListener('click', clearImportedRisks);
+            // importRisksBtn now has onclick in ribbon HTML
+            // clearRisksBtn now has onclick in ribbon HTML
 
             // Initialize dashboard
             updateDashboard();
@@ -7766,6 +7975,123 @@
         }
 
         // ==================== END CATEGORY FILTER PANEL ====================
+
+
+        // ==================== EDIT RISK MODAL ====================
+        let _editingRiskId = null;
+
+        function openEditRiskModal(riskId) {
+            const risk = risks.find(r => r.id === riskId);
+            if (!risk) { alert('Risk not found: ' + riskId); return; }
+            _editingRiskId = riskId;
+
+            // Show immutable ID in header
+            const { shortId, dateStr } = (() => {
+                const s = String(riskId);
+                const m = s.match(/^(.*)-(\d{8})$/);
+                if (m) {
+                    const y=m[2].slice(0,4),mo=m[2].slice(4,6),d=m[2].slice(6,8);
+                    return { shortId: m[1], dateStr: d+'/'+mo+'/'+y };
+                }
+                return { shortId: s, dateStr: '' };
+            })();
+            document.getElementById('editRiskIdDisplay').textContent =
+                shortId + (dateStr ? '  •  ' + dateStr : '');
+
+            // Populate Tab 1
+            document.getElementById('e_description').value  = risk.description || '';
+            document.getElementById('e_taraThreat').value   = risk.taraThreat || risk['TARA Threat'] || '';
+            document.getElementById('e_vulnerability').value= risk.vulnerability || '';
+            document.getElementById('e_category').value     = risk.category || '';
+            document.getElementById('e_strategic').value    = risk.strategicPriority || '';
+            document.getElementById('e_likelihood').value   = risk.likelihood || '';
+            document.getElementById('e_impact').value       = risk.impact || '';
+            document.getElementById('e_proximity').value    = parseInt(String(risk.proximity)) || '';
+
+            // Populate Tab 2
+            document.getElementById('e_mitigation').value       = risk.mitigation || risk.proposedMitigation || '';
+            document.getElementById('e_mitigationStatus').value = risk.mitigationStatus || '';
+            document.getElementById('e_owner').value            = risk.owner || '';
+            document.getElementById('e_actionee').value         = risk.actioneeName || '';
+            document.getElementById('e_comments').value         = risk.comments || '';
+
+            const msg = document.getElementById('editModalMsg');
+            if (msg) { msg.className = 'modal-msg'; msg.textContent = ''; }
+
+            switchEditModalTab(1);
+            document.getElementById('editRiskModal').classList.add('open');
+        }
+
+        function closeEditRiskModal() {
+            document.getElementById('editRiskModal').classList.remove('open');
+            _editingRiskId = null;
+        }
+
+        function switchEditModalTab(n) {
+            [1,2].forEach(i => {
+                document.getElementById('editModalTab' + i).classList.toggle('active', i === n);
+                document.getElementById('editModalPanel' + i).classList.toggle('active', i === n);
+                document.getElementById('editModalFooter' + i).style.display = i === n ? 'flex' : 'none';
+            });
+        }
+
+        function saveEditRiskModal() {
+            const desc = document.getElementById('e_description').value.trim();
+            const cat  = document.getElementById('e_category').value;
+            const lik  = document.getElementById('e_likelihood').value;
+            const imp  = document.getElementById('e_impact').value;
+            const msg  = document.getElementById('editModalMsg');
+
+            if (!desc || !cat || !lik || !imp) {
+                msg.className = 'modal-msg error';
+                msg.textContent = 'Please fill in all required fields (marked *).';
+                return;
+            }
+
+            const idx = risks.findIndex(r => r.id === _editingRiskId);
+            if (idx === -1) { alert('Risk not found'); return; }
+
+            const prox = parseInt(document.getElementById('e_proximity').value) || 3;
+            const mitigationStatus = document.getElementById('e_mitigationStatus').value || '1 - None';
+
+            risks[idx] = {
+                ...risks[idx],
+                description:      desc,
+                category:         cat,
+                strategicPriority: document.getElementById('e_strategic').value,
+                likelihood:       parseInt(lik),
+                impact:           parseInt(imp),
+                proximity:        prox,
+                taraThreat:       document.getElementById('e_taraThreat').value.trim(),
+                vulnerability:    document.getElementById('e_vulnerability').value.trim(),
+                mitigation:       document.getElementById('e_mitigation').value.trim(),
+                mitigationStatus: mitigationStatus,
+                owner:            document.getElementById('e_owner').value,
+                actioneeName:     document.getElementById('e_actionee').value.trim(),
+                comments:         document.getElementById('e_comments').value.trim(),
+                lastModified:     new Date().toISOString(),
+            };
+            risks[idx].rag = calculateRAG(risks[idx].likelihood, risks[idx].impact,
+                                          risks[idx].proximity, risks[idx].mitigationStatus);
+            risks[idx].riskScore = calculateRiskScore(risks[idx].likelihood, risks[idx].impact,
+                                                      risks[idx].proximity, risks[idx].mitigationStatus);
+
+            localStorage.setItem('risks', JSON.stringify(risks));
+            updateDashboard();
+            updateRiskTable();
+            updateQuadrantChart();
+
+            msg.className = 'modal-msg success';
+            msg.textContent = 'Risk updated successfully!';
+            setTimeout(() => closeEditRiskModal(), 1000);
+        }
+
+        // Close edit modal on overlay click
+        document.getElementById('editRiskModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditRiskModal();
+        });
+
+        // ==================== END EDIT RISK MODAL ====================
 
         // ==================== QUADRANT LEGEND TOGGLE ====================
         function toggleQuadLegend() {
