@@ -253,7 +253,9 @@
             background: white;
             border-radius: 0 !important;
             box-shadow: none !important;
-            overflow: hidden;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Hide original header (replaced by topbar) */
@@ -334,8 +336,11 @@
         }
 
         .content {
-            padding: 30px;
+            padding: 0;
             overflow-x: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .tab-content {
@@ -347,6 +352,22 @@
             display: flex;
             flex-direction: column;
             animation: fadeIn 0.3s ease;
+        }
+
+        /* Inner body of each tab — provides the padding that was on .content */
+        .tab-body {
+            padding: 24px 30px 30px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Dashboard uses a flex row wrapper inside tab-body */
+        .dashboard-flex-row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 0;
+            width: 100%;
         }
 
         @keyframes fadeIn {
@@ -1156,6 +1177,132 @@
 
 
 
+
+        /* ===== DASHBOARD COMMENTARY PANEL ===== */
+        .dashboard-with-commentary {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .dashboard-main-col {
+            flex: 1;
+            min-width: 0;
+            transition: all 0.3s ease;
+            overflow-x: auto;
+        }
+
+        .dashboard-commentary-col {
+            width: 320px;
+            flex-shrink: 0;
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            padding-left: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .dashboard-commentary-col.visible {
+            display: flex;
+        }
+
+        .commentary-panel {
+            background: white;
+            border: 1.5px solid #dce3ea;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+
+        .commentary-header {
+            background: linear-gradient(135deg, #700d19, #8b1426);
+            color: white;
+            padding: 14px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .commentary-subheading {
+            font-size: 11px;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        .commentary-body {
+            padding: 16px 18px;
+            flex: 1;
+        }
+
+        .commentary-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #888;
+            font-size: 13px;
+            padding: 20px 0;
+        }
+
+        .commentary-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #e0e0e0;
+            border-top-color: #700d19;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .commentary-bullets {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .commentary-bullet {
+            display: list-item;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #2c3e50;
+            margin-left: 16px;
+            padding-left: 4px;
+            list-style-type: none;
+            position: relative;
+        }
+
+        .commentary-bullet::before {
+            content: '•';
+            color: #700d19;
+            font-size: 16px;
+            position: absolute;
+            left: -14px;
+            top: 1px;
+        }
+
+        .commentary-error {
+            color: #c0392b;
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        .commentary-refresh {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: flex-end;
+        }
+        /* ===== END DASHBOARD COMMENTARY PANEL ===== */
+
         /* ===== RIBBON MENU ===== */
         .ribbon {
             display: flex;
@@ -1167,8 +1314,6 @@
             flex-wrap: nowrap;
             min-height: 52px;
             flex-shrink: 0;
-            /* Pull ribbon flush against topbar, out of .content padding */
-            margin: -30px -30px 20px -30px;
         }
 
         .ribbon-label {
@@ -3635,8 +3780,8 @@
                         </div>
                         <div class="modal-field">
                             <label>Risk Owner</label>
-                            <select id="e_owner">
-                                <option value="">Select…</option>
+                            <input type="text" id="e_owner" list="e_owner_list" placeholder="Owner name…" autocomplete="off">
+                            <datalist id="e_owner_list">
                                 <option>CEO (James Rose)</option>
                                 <option>CCO (James Staargaard)</option>
                                 <option>President (Karl Johnson)</option>
@@ -3648,7 +3793,7 @@
                                 <option>Finance (JoAnne Tompson)</option>
                                 <option>VP Sales (Mike Newall)</option>
                                 <option>Unassigned</option>
-                            </select>
+                            </datalist>
                         </div>
                         <div class="modal-field">
                             <label>Actionee</label>
@@ -3783,7 +3928,11 @@
                     <button class="rbtn rbtn-purple" onclick="toggleRadar()">
                         <span id="radarToggleText">Show Risk Radar</span>
                     </button>
+                    <button class="rbtn rbtn-toggle" id="commentaryToggleBtn" onclick="toggleCommentary()">💬 Show Commentary</button>
                 </div>
+                <div class="tab-body">
+                <div class="dashboard-flex-row" id="dashFlexRow">
+                <div class="dashboard-main-col" id="dashMainCol">
                 <div class="dashboard-layout">
 
                     <!-- Risk Categories Section with Simple Table -->
@@ -3948,8 +4097,33 @@
                             <canvas id="radarChart"></canvas>
                         </div>
                     </div>
+
+                </div><!-- /.dashboard-layout -->
+                </div><!-- /.dashboard-main-col -->
+
+                <!-- Commentary Panel -->
+                <div class="dashboard-commentary-col" id="commentaryCol" style="display:none;">
+                    <div class="commentary-panel">
+                        <div class="commentary-header">
+                            💬 Commentary
+                            <div class="commentary-subheading">What the data tells us…</div>
+                        </div>
+                        <div class="commentary-body" id="commentaryBody">
+                            <div class="commentary-loading" id="commentaryLoading" style="display:none;">
+                                <div class="commentary-spinner"></div>
+                                <span>Analysing risk data…</span>
+                            </div>
+                            <ul class="commentary-bullets" id="commentaryBullets"></ul>
+                            <div class="commentary-error" id="commentaryError" style="display:none;"></div>
+                            <div class="commentary-refresh">
+                                <button class="rbtn rbtn-primary" onclick="refreshCommentary()" style="font-size:11px;height:28px;padding:0 10px;">↻ Refresh</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                </div><!-- /.dashboard-flex-row -->
+                </div><!-- /.tab-body -->
 
             <!-- Risk Register Tab -->
             <div id="register" class="tab-content">
@@ -3978,7 +4152,7 @@
                     <button class="rbtn rbtn-amber" id="saReviewBtn" onclick="filterSAReview()">📋 SA Review</button>
                     <button class="rbtn rbtn-neutral" onclick="exportToExcel()">📤 Export to Excel</button>
                 </div>
-
+                <div class="tab-body">
 
                 <!-- Add New Risk Panel (inline, collapsible) -->
                 <div id="addRiskPanel" style="display:none; background:#f8f9fa; border:2px solid #27ae60; border-radius:10px; padding:25px; margin-bottom:20px;">
@@ -4126,7 +4300,7 @@
                                 <th>Vulnerability</th>
                                 <th>Proposed Mitigation</th>
                                 <th>Mitigation Status</th>
-                                <th>Owner</th>
+                                <th>Risk Owner</th>
                                 <th>Strategic Priority</th>
                             </tr>
                         </thead>
@@ -4140,6 +4314,7 @@
                     <div class="pagination-info" id="paginationInfo"></div>
                     <div class="pagination-controls" id="paginationControls"></div>
                 </div>
+                </div><!-- /.tab-body -->
             </div>
 
             <!-- Add Risk Tab -->
@@ -4158,6 +4333,7 @@
                         Include SA Risks <span class="toggle-status" id="saItemsStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span>
                     </button>
                 </div>
+                <div class="tab-body">
                 <!-- Week Navigation -->
                 <div class="week-navigation-container">
                     <div class="week-navigation-row">
@@ -4511,6 +4687,7 @@
                     </div>
                 </div>
                 </div><!-- /#bprSectionsWrapper -->
+                </div><!-- /.tab-body -->
             </div><!-- /#business-plan tab -->
 
             <!-- Quadrant Chart Tab -->
@@ -4519,9 +4696,10 @@
                 <div class="ribbon">
                     <span class="ribbon-label">Quadrant Chart</span>
                     <button class="rbtn rbtn-purple" id="catFilterToggle" onclick="toggleCatPanel()">Show Categories</button>
-                    <button class="rbtn rbtn-toggle" id="mitigationToggle">Show Post-Mitigation</button>
                     <button class="rbtn rbtn-toggle" id="legendToggle" onclick="toggleQuadLegend()">Hide Legend</button>
+                    <button class="rbtn rbtn-toggle" id="mitigationToggle">Show Post-Mitigation</button>
                 </div>
+                <div class="tab-body">
                 <div class="quadrant-header" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;">
                     <div class="quadrant-title-bar">
                         <h1 class="quadrant-title">Likelihood vs Impact</h1>
@@ -4677,6 +4855,7 @@
                         </div><!-- /.quadrant-chart-wrapper -->
                     </div><!-- /.quadrant-content -->
                 </div><!-- /.quadrant-main-container -->
+                </div><!-- /.tab-body -->
             </div><!-- /#quadrant tab -->
             </div><!-- /.content -->
                     </div><!-- /.container -->
@@ -6550,6 +6729,214 @@
                 updateQuadrantChart();
             }
         }
+
+
+        // ==================== DASHBOARD COMMENTARY ====================
+        let _commentaryVisible = false;
+        let _commentaryCache = { radar: null, summary: null };
+
+        function toggleCommentary() {
+            _commentaryVisible = !_commentaryVisible;
+            const col     = document.getElementById('commentaryCol');
+            const btn     = document.getElementById('commentaryToggleBtn');
+
+            // Remove any existing injected style
+            const existing = document.getElementById('commentaryLayoutStyle');
+            if (existing) existing.remove();
+
+            if (_commentaryVisible) {
+                // Inject a style tag — highest specificity, no inheritance issues
+                const style = document.createElement('style');
+                style.id = 'commentaryLayoutStyle';
+                style.textContent = `
+                    #dashFlexRow  { display:flex !important; flex-direction:row !important; align-items:flex-start !important; }
+                    #dashMainCol  { width:65% !important; max-width:65% !important; min-width:0 !important; flex-shrink:0 !important; overflow:hidden !important; }
+                    #commentaryCol { display:flex !important; flex-direction:column !important; width:35% !important; max-width:35% !important; min-width:240px !important; padding-left:20px !important; box-sizing:border-box !important; flex-shrink:0 !important; }
+                `;
+                document.head.appendChild(style);
+
+                btn.classList.add('on');
+                btn.textContent = '💬 Hide Commentary';
+                refreshCommentary();
+            } else {
+                col.style.display = 'none';
+                btn.classList.remove('on');
+                btn.textContent = '💬 Show Commentary';
+            }
+        }
+
+        async function refreshCommentary() {
+            if (!_commentaryVisible) return;
+            const isRadar = document.getElementById('radarSection') &&
+                            !document.getElementById('radarSection').classList.contains('hidden');
+            const cacheKey = isRadar ? 'radar' : 'summary';
+
+            const loadEl  = document.getElementById('commentaryLoading');
+            const listEl  = document.getElementById('commentaryBullets');
+            const errEl   = document.getElementById('commentaryError');
+
+            loadEl.style.display = 'flex';
+            listEl.innerHTML = '';
+            errEl.style.display = 'none';
+
+            // Build a concise data summary for the prompt
+            const total = risks.length;
+            const ragCounts = { red: 0, amber: 0, green: 0 };
+            const catScores = {};
+            risks.forEach(r => {
+                ragCounts[r.rag] = (ragCounts[r.rag] || 0) + 1;
+                const cat = r.category || 'Unknown';
+                if (!catScores[cat]) catScores[cat] = { total: 0, count: 0 };
+                const score = (r.riskScore && !isNaN(r.riskScore))
+                    ? Number(r.riskScore)
+                    : calculateRiskScore(
+                        parseInt(String(r.likelihood))||1,
+                        parseInt(String(r.impact))||1,
+                        parseInt(String(r.proximity))||3,
+                        r.mitigationStatus||'1 - None');
+                catScores[cat].total += score;
+                catScores[cat].count++;
+            });
+            const catSummary = Object.entries(catScores)
+                .map(([cat, d]) => `${cat}: avg score ${(d.total/d.count).toFixed(1)}, ${d.count} risks`)
+                .join('; ');
+            const topRed = risks.filter(r => r.rag === 'red')
+                .sort((a,b) => (b.riskScore||0)-(a.riskScore||0))
+                .slice(0,3)
+                .map(r => `"${(r.description||'').slice(0,60)}" (score ${r.riskScore||'?'})`)
+                .join(', ');
+            const mitStatus = {};
+            risks.forEach(r => {
+                const s = (r.mitigationStatus||'Unknown').replace(/^\d+ - /,'');
+                mitStatus[s] = (mitStatus[s]||0) + 1;
+            });
+            const mitSummary = Object.entries(mitStatus).map(([k,v]) => `${k}: ${v}`).join(', ');
+            const viewLabel = isRadar ? 'risk radar chart' : 'risk summary table';
+
+            const prompt = `You are analysing a risk register for a technology company. 
+Current view: ${viewLabel}.
+Total risks: ${total}. RAG status: Red=${ragCounts.red}, Amber=${ragCounts.amber}, Green=${ragCounts.green}.
+Category breakdown: ${catSummary}.
+Top red risks: ${topRed || 'none'}.
+Mitigation status distribution: ${mitSummary}.
+
+Generate exactly 7 concise bullet points (no bullet symbols, one per line) that summarise what this data tells a senior executive. Focus on: overall risk posture, highest concern areas, mitigation gaps, and any notable patterns. Be direct and specific. No preamble, no headers — just the 7 bullet points, one per line.`;
+
+            // Generate commentary locally from risk data
+            try {
+                await new Promise(r => setTimeout(r, 400)); // brief pause for UX
+
+                const bullets = generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus);
+
+                loadEl.style.display = 'none';
+                listEl.innerHTML = bullets.map(b =>
+                    `<li class="commentary-bullet">${b}</li>`
+                ).join('');
+                _commentaryCache[cacheKey] = bullets;
+            } catch(err) {
+                loadEl.style.display = 'none';
+                errEl.style.display = 'block';
+                errEl.textContent = 'Unable to generate commentary.';
+            }
+        }
+
+        // Refresh commentary when radar/summary view switches
+        function generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus) {
+            const total = risks.length;
+            const redPct  = total ? Math.round((ragCounts.red   || 0) / total * 100) : 0;
+            const amberPct= total ? Math.round((ragCounts.amber || 0) / total * 100) : 0;
+            const greenPct= total ? Math.round((ragCounts.green || 0) / total * 100) : 0;
+
+            // Highest scoring category
+            const catList = Object.entries(catScores)
+                .map(([cat, d]) => ({ cat, avg: d.total / d.count, count: d.count }))
+                .sort((a, b) => b.avg - a.avg);
+            const topCat    = catList[0];
+            const lowestCat = catList[catList.length - 1];
+
+            // Mitigation gaps
+            const noMit   = (mitStatus['None'] || 0) + (mitStatus['1 - None'] || 0);
+            const planned = (mitStatus['Planned'] || 0) + (mitStatus['3 - Planned'] || 0);
+            const done    = (mitStatus['Validated'] || 0) + (mitStatus['5 - Validated'] || 0)
+                          + (mitStatus['Fully mitigated'] || 0) + (mitStatus['6 - Fully mitigated'] || 0)
+                          + (mitStatus['Eliminated'] || 0) + (mitStatus['7 - Eliminated'] || 0);
+            const identified = (mitStatus['Identified'] || 0) + (mitStatus['2 - Identified'] || 0);
+            const implemented = (mitStatus['Implemented'] || 0) + (mitStatus['4 - Implemented'] || 0);
+
+            // SA Review risks
+            const saRisks = risks.filter(r => parseInt(String(r.proximity)) === 5).length;
+
+            // High score risks
+            const highScoreRisks = risks.filter(r => (r.riskScore || 0) >= 15).length;
+            const avgScore = total ? (risks.reduce((s,r) => s + (r.riskScore||0), 0) / total).toFixed(1) : 0;
+
+            // Top red risk
+            const topRedRisk = risks.filter(r => r.rag === 'red')
+                .sort((a,b) => (b.riskScore||0) - (a.riskScore||0))[0];
+
+            const bullets = [];
+
+            // 1. Overall posture
+            if (redPct >= 20) {
+                bullets.push(`Overall risk posture is <strong>elevated</strong> — ${ragCounts.red} of ${total} risks (${redPct}%) are rated Red, indicating a material number of unresolved high-priority concerns.`);
+            } else if (redPct > 0) {
+                bullets.push(`Overall risk posture is <strong>cautionary</strong> — ${ragCounts.red} Red, ${ragCounts.amber} Amber and ${ragCounts.green} Green risks across ${total} items. The majority of the register is within tolerable thresholds.`);
+            } else {
+                bullets.push(`Overall risk posture is <strong>broadly stable</strong> — no Red-rated risks are currently recorded across ${total} items in the register.`);
+            }
+
+            // 2. Highest risk category
+            if (topCat) {
+                bullets.push(`<strong>${topCat.cat}</strong> carries the highest average risk score (${topCat.avg.toFixed(1)}) with ${topCat.count} risk${topCat.count>1?'s':''}, making it the most significant area of concern requiring leadership attention.`);
+            }
+
+            // 3. Top red risk
+            if (topRedRisk) {
+                bullets.push(`The single highest-severity risk is <strong>"${(topRedRisk.description||'').slice(0,70)}${topRedRisk.description?.length>70?'…':''}"</strong> with a risk score of ${topRedRisk.riskScore||'N/A'}.`);
+            }
+
+            // 4. Mitigation gaps
+            if (noMit > 0) {
+                const noMitPct = Math.round(noMit / total * 100);
+                bullets.push(`<strong>Mitigation gap:</strong> ${noMit} risk${noMit>1?'s':''} (${noMitPct}%) have no mitigation in place — these represent the most immediate action priority for risk owners.`);
+            } else {
+                bullets.push(`All risks have at least an identified mitigation pathway — a positive indicator of active risk management discipline across the register.`);
+            }
+
+            // 5. Mitigation progress
+            if (done > 0) {
+                bullets.push(`${done} risk${done>1?'s have':' has'} been fully mitigated or eliminated, demonstrating tangible progress. A further ${implemented + planned} ${implemented+planned===1?'is':'are'} in active mitigation.`);
+            } else if (planned + implemented > 0) {
+                bullets.push(`${planned + implemented} risk${planned+implemented>1?'s are':' is'} in active mitigation (planned or implemented), though none have yet reached full mitigation — progress should be monitored closely.`);
+            }
+
+            // 6. SA Review proximity
+            if (saRisks > 0) {
+                bullets.push(`<strong>${saRisks} risk${saRisks>1?'s are':' is'} flagged for SA Review</strong> — these warrant agenda time at the next strategic review session given their governance significance.`);
+            } else {
+                bullets.push(`No risks are currently flagged for SA Review, suggesting the immediate escalation pipeline is clear.`);
+            }
+
+            // 7. Average score / concentration
+            bullets.push(`The portfolio average risk score is <strong>${avgScore}</strong>${highScoreRisks > 0 ? ` with ${highScoreRisks} risk${highScoreRisks>1?'s':''} scoring 15 or above — these high-concentration items merit prioritised mitigation investment` : ' — risk scores are distributed within a manageable range across the portfolio'}.`);
+
+            // 8. Lowest category (positive signal if applicable)
+            if (lowestCat && lowestCat.cat !== topCat?.cat && lowestCat.avg < 10) {
+                bullets.push(`<strong>${lowestCat.cat}</strong> shows the lowest average risk score (${lowestCat.avg.toFixed(1)}), offering a relative area of stability within the overall portfolio.`);
+            }
+
+            return bullets;
+        }
+
+        const _origToggleRadar = toggleRadar;
+        function toggleRadar() {
+            _origToggleRadar();
+            if (_commentaryVisible) {
+                _commentaryCache = { radar: null, summary: null }; // invalidate cache
+                refreshCommentary();
+            }
+        }
+        // ==================== END DASHBOARD COMMENTARY ====================
 
         // ==================== DASHBOARD FUNCTIONS ====================
 
