@@ -6855,89 +6855,142 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
         // Refresh commentary when radar/summary view switches
         function generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus) {
             const total = risks.length;
-            const redPct  = total ? Math.round((ragCounts.red   || 0) / total * 100) : 0;
-            const amberPct= total ? Math.round((ragCounts.amber || 0) / total * 100) : 0;
-            const greenPct= total ? Math.round((ragCounts.green || 0) / total * 100) : 0;
+            if (total === 0) return ['No risks are currently loaded in the register.'];
 
-            // Highest scoring category
+            const redPct   = Math.round((ragCounts.red   || 0) / total * 100);
+            const amberPct = Math.round((ragCounts.amber || 0) / total * 100);
+            const greenPct = Math.round((ragCounts.green || 0) / total * 100);
+
+            // Category analysis — sorted by avg score
             const catList = Object.entries(catScores)
                 .map(([cat, d]) => ({ cat, avg: d.total / d.count, count: d.count }))
                 .sort((a, b) => b.avg - a.avg);
             const topCat    = catList[0];
             const lowestCat = catList[catList.length - 1];
+            const aboveAvgCats = catList.filter(c => c.avg > (risks.reduce((s,r)=>s+(r.riskScore||0),0)/total));
 
-            // Mitigation gaps
-            const noMit   = (mitStatus['None'] || 0) + (mitStatus['1 - None'] || 0);
-            const planned = (mitStatus['Planned'] || 0) + (mitStatus['3 - Planned'] || 0);
-            const done    = (mitStatus['Validated'] || 0) + (mitStatus['5 - Validated'] || 0)
-                          + (mitStatus['Fully mitigated'] || 0) + (mitStatus['6 - Fully mitigated'] || 0)
-                          + (mitStatus['Eliminated'] || 0) + (mitStatus['7 - Eliminated'] || 0);
-            const identified = (mitStatus['Identified'] || 0) + (mitStatus['2 - Identified'] || 0);
-            const implemented = (mitStatus['Implemented'] || 0) + (mitStatus['4 - Implemented'] || 0);
+            // Mitigation breakdown — strip numeric prefixes
+            const strip = s => (s||'').replace(/^\d+\s*-\s*/,'');
+            const mitGroups = {
+                none:       risks.filter(r => strip(r.mitigationStatus) === 'None'),
+                identified: risks.filter(r => strip(r.mitigationStatus) === 'Identified'),
+                planned:    risks.filter(r => strip(r.mitigationStatus) === 'Planned'),
+                implemented:risks.filter(r => strip(r.mitigationStatus) === 'Implemented'),
+                validated:  risks.filter(r => strip(r.mitigationStatus) === 'Validated'),
+                fully:      risks.filter(r => strip(r.mitigationStatus) === 'Fully mitigated'),
+                eliminated: risks.filter(r => strip(r.mitigationStatus) === 'Eliminated'),
+            };
+            const activeCount   = mitGroups.planned.length + mitGroups.implemented.length;
+            const resolvedCount = mitGroups.validated.length + mitGroups.fully.length + mitGroups.eliminated.length;
+            const unmitigated   = mitGroups.none.length;
+            const earlyStage    = mitGroups.none.length + mitGroups.identified.length;
 
-            // SA Review risks
-            const saRisks = risks.filter(r => parseInt(String(r.proximity)) === 5).length;
+            // Risk score analysis
+            const scores = risks.map(r => Number(r.riskScore)||0).filter(s=>s>0);
+            const avgScore = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+            const maxScore = Math.max(...scores);
+            const redRisks  = risks.filter(r => r.rag === 'red').sort((a,b)=>(b.riskScore||0)-(a.riskScore||0));
+            const amberRisks= risks.filter(r => r.rag === 'amber').sort((a,b)=>(b.riskScore||0)-(a.riskScore||0));
+            const highScore = risks.filter(r => (r.riskScore||0) >= 15);
+            const criticalUnmitigated = risks.filter(r => r.rag === 'red' && strip(r.mitigationStatus) === 'None');
 
-            // High score risks
-            const highScoreRisks = risks.filter(r => (r.riskScore || 0) >= 15).length;
-            const avgScore = total ? (risks.reduce((s,r) => s + (r.riskScore||0), 0) / total).toFixed(1) : 0;
+            // Proximity / urgency
+            const saRisks       = risks.filter(r => parseInt(String(r.proximity)) === 5);
+            const immediateRisks= risks.filter(r => parseInt(String(r.proximity)) <= 2 && r.rag !== 'green');
+            const longtermRisks = risks.filter(r => parseInt(String(r.proximity)) === 4);
 
-            // Top red risk
-            const topRedRisk = risks.filter(r => r.rag === 'red')
-                .sort((a,b) => (b.riskScore||0) - (a.riskScore||0))[0];
+            // Owner concentration
+            const ownerMap = {};
+            risks.filter(r=>r.rag==='red'||r.rag==='amber').forEach(r => {
+                const o = r.owner || 'Unassigned';
+                ownerMap[o] = (ownerMap[o]||0) + 1;
+            });
+            const topOwner = Object.entries(ownerMap).sort((a,b)=>b[1]-a[1])[0];
+
+            // Strategic priority concentration
+            const spMap = {};
+            redRisks.forEach(r => {
+                const sp = r.strategicPriority || 'Unassigned';
+                spMap[sp] = (spMap[sp]||0) + 1;
+            });
+            const topSP = Object.entries(spMap).sort((a,b)=>b[1]-a[1])[0];
 
             const bullets = [];
 
-            // 1. Overall posture
-            if (redPct >= 20) {
-                bullets.push(`Overall risk posture is <strong>elevated</strong> — ${ragCounts.red} of ${total} risks (${redPct}%) are rated Red, indicating a material number of unresolved high-priority concerns.`);
-            } else if (redPct > 0) {
-                bullets.push(`Overall risk posture is <strong>cautionary</strong> — ${ragCounts.red} Red, ${ragCounts.amber} Amber and ${ragCounts.green} Green risks across ${total} items. The majority of the register is within tolerable thresholds.`);
-            } else {
-                bullets.push(`Overall risk posture is <strong>broadly stable</strong> — no Red-rated risks are currently recorded across ${total} items in the register.`);
-            }
+            // ── Bullet 1: Overall posture — direct, calibrated ────────────────
+            const postureWord = redPct >= 25 ? 'HIGH' : redPct >= 10 ? 'ELEVATED' : redPct > 0 ? 'CAUTIONARY' : 'STABLE';
+            const postureColour = redPct >= 25 ? '#c0392b' : redPct >= 10 ? '#d68910' : redPct > 0 ? '#d68910' : '#1e8449';
+            bullets.push(`Risk posture is <strong style="color:${postureColour}">${postureWord}</strong> — ${ragCounts.red||0} Red, ${ragCounts.amber||0} Amber, ${ragCounts.green||0} Green across ${total} risks (avg score ${avgScore.toFixed(1)}, peak ${maxScore.toFixed(1)}). ${redPct > 0 ? `Red items represent ${redPct}% of the portfolio.` : 'No critical breaches recorded.'}`);
 
-            // 2. Highest risk category
+            // ── Bullet 2: Hottest category with context ───────────────────────
             if (topCat) {
-                bullets.push(`<strong>${topCat.cat}</strong> carries the highest average risk score (${topCat.avg.toFixed(1)}) with ${topCat.count} risk${topCat.count>1?'s':''}, making it the most significant area of concern requiring leadership attention.`);
+                const redInTop = risks.filter(r=>r.category===topCat.cat&&r.rag==='red').length;
+                const gap = topCat.avg - (catList[1]?.avg||0);
+                bullets.push(`<strong>${topCat.cat}</strong> is the highest-risk category (avg ${topCat.avg.toFixed(1)}, ${topCat.count} risks${redInTop>0?`, ${redInTop} Red`:''})${gap > 2 ? ` — notably ${gap.toFixed(1)} points above the next category` : ''}. ${aboveAvgCats.length > 1 ? `${aboveAvgCats.length} of ${catList.length} categories are above the portfolio average.` : 'All other categories are at or below the portfolio average.'}`);
             }
 
-            // 3. Top red risk
-            if (topRedRisk) {
-                bullets.push(`The single highest-severity risk is <strong>"${(topRedRisk.description||'').slice(0,70)}${topRedRisk.description?.length>70?'…':''}"</strong> with a risk score of ${topRedRisk.riskScore||'N/A'}.`);
+            // ── Bullet 3: Critical unmitigated red risks ──────────────────────
+            if (criticalUnmitigated.length > 0) {
+                const names = criticalUnmitigated.slice(0,2).map(r=>`"${(r.description||'').slice(0,45)}${(r.description||'').length>45?'…':''}"`).join(', ');
+                bullets.push(`<strong style="color:#c0392b">⚠ ${criticalUnmitigated.length} Red risk${criticalUnmitigated.length>1?'s have':' has'} no mitigation in place</strong> — including ${names}. These require immediate owner action.`);
+            } else if (redRisks.length > 0) {
+                const top = redRisks[0];
+                bullets.push(`The highest-severity risk is <strong>"${(top.description||'').slice(0,60)}${(top.description||'').length>60?'…':''}"</strong> (score ${Number(top.riskScore).toFixed(1)}, owner: ${top.owner||'Unassigned'}) — all Red risks have mitigation pathways in place.`);
             }
 
-            // 4. Mitigation gaps
-            if (noMit > 0) {
-                const noMitPct = Math.round(noMit / total * 100);
-                bullets.push(`<strong>Mitigation gap:</strong> ${noMit} risk${noMit>1?'s':''} (${noMitPct}%) have no mitigation in place — these represent the most immediate action priority for risk owners.`);
+            // ── Bullet 4: Mitigation pipeline health ─────────────────────────
+            const unmitigatedPct = Math.round(earlyStage/total*100);
+            if (resolvedCount > 0 && activeCount > 0) {
+                bullets.push(`Mitigation pipeline is <strong>active</strong> — ${resolvedCount} risk${resolvedCount>1?'s':''} fully resolved, ${activeCount} in active treatment (planned/implemented), ${earlyStage} still at early stage (none/identified). ${unmitigatedPct > 30 ? `The ${unmitigatedPct}% early-stage rate warrants attention.` : 'Pipeline balance is healthy.'}`);
+            } else if (unmitigated > 0) {
+                const pct = Math.round(unmitigated/total*100);
+                bullets.push(`<strong>Mitigation gap:</strong> ${unmitigated} risk${unmitigated>1?'s':''} (${pct}%) have no mitigation whatsoever. ${pct > 25 ? 'This represents a significant governance gap requiring urgent remediation.' : 'Risk owners should be engaged to initiate mitigation planning.'}`);
             } else {
-                bullets.push(`All risks have at least an identified mitigation pathway — a positive indicator of active risk management discipline across the register.`);
+                bullets.push(`All risks have at least an identified mitigation — a positive signal. ${resolvedCount > 0 ? `${resolvedCount} have been fully resolved.` : 'Focus should shift to progressing planned and implemented treatments to validation.'}`);
             }
 
-            // 5. Mitigation progress
-            if (done > 0) {
-                bullets.push(`${done} risk${done>1?'s have':' has'} been fully mitigated or eliminated, demonstrating tangible progress. A further ${implemented + planned} ${implemented+planned===1?'is':'are'} in active mitigation.`);
-            } else if (planned + implemented > 0) {
-                bullets.push(`${planned + implemented} risk${planned+implemented>1?'s are':' is'} in active mitigation (planned or implemented), though none have yet reached full mitigation — progress should be monitored closely.`);
-            }
-
-            // 6. SA Review proximity
-            if (saRisks > 0) {
-                bullets.push(`<strong>${saRisks} risk${saRisks>1?'s are':' is'} flagged for SA Review</strong> — these warrant agenda time at the next strategic review session given their governance significance.`);
+            // ── Bullet 5: Urgency / proximity ────────────────────────────────
+            if (immediateRisks.length > 0) {
+                bullets.push(`<strong>${immediateRisks.length} non-green risk${immediateRisks.length>1?'s':''}</strong> are rated Immediate or Imminent proximity — these demand near-term management attention${saRisks.length>0?`, alongside ${saRisks.length} risk${saRisks.length>1?'s':''} flagged for SA Review`:''}. ${longtermRisks.length > 0 ? `${longtermRisks.length} long-term risks should be monitored but are not time-critical.` : ''}`);
+            } else if (saRisks.length > 0) {
+                bullets.push(`<strong>${saRisks.length} risk${saRisks.length>1?'s are':' is'} flagged for SA Review</strong> — these warrant a dedicated agenda item at the next strategic session. No risks are rated as Immediate or Imminent proximity.`);
             } else {
-                bullets.push(`No risks are currently flagged for SA Review, suggesting the immediate escalation pipeline is clear.`);
+                bullets.push(`No risks are currently rated as Immediate, Imminent, or SA Review — the near-term escalation pipeline is clear. ${longtermRisks.length>0?`${longtermRisks.length} longer-horizon risks should remain on the monitoring radar.`:''}`);
             }
 
-            // 7. Average score / concentration
-            bullets.push(`The portfolio average risk score is <strong>${avgScore}</strong>${highScoreRisks > 0 ? ` with ${highScoreRisks} risk${highScoreRisks>1?'s':''} scoring 15 or above — these high-concentration items merit prioritised mitigation investment` : ' — risk scores are distributed within a manageable range across the portfolio'}.`);
-
-            // 8. Lowest category (positive signal if applicable)
-            if (lowestCat && lowestCat.cat !== topCat?.cat && lowestCat.avg < 10) {
-                bullets.push(`<strong>${lowestCat.cat}</strong> shows the lowest average risk score (${lowestCat.avg.toFixed(1)}), offering a relative area of stability within the overall portfolio.`);
+            // ── Bullet 6: Owner accountability ───────────────────────────────
+            if (topOwner && topOwner[0] !== 'Unassigned') {
+                const unassigned = risks.filter(r=>(!r.owner||r.owner==='Unassigned')&&r.rag!=='green').length;
+                bullets.push(`<strong>${topOwner[0]}</strong> carries the highest Red/Amber exposure with ${topOwner[1]} at-risk item${topOwner[1]>1?'s':''}${topSP?`, primarily in the <strong>${topSP[0]}</strong> strategic priority`:''}. ${unassigned>0?`<strong style="color:#d68910">${unassigned} non-green risk${unassigned>1?'s':''} remain unassigned</strong> — ownership should be clarified.`:'All non-green risks have named owners.'}`);
+            } else {
+                const unassigned = risks.filter(r=>(!r.owner||r.owner==='Unassigned')&&r.rag!=='green').length;
+                if (unassigned > 0) {
+                    bullets.push(`<strong style="color:#d68910">${unassigned} non-green risk${unassigned>1?'s':''} have no named owner</strong> — accountability gaps of this kind can delay mitigation and should be resolved in the next review cycle.`);
+                }
             }
 
-            return bullets;
+            // ── Bullet 7: Positive signal / lowest category ───────────────────
+            if (lowestCat && lowestCat.cat !== topCat?.cat) {
+                const greenInLow = risks.filter(r=>r.category===lowestCat.cat&&r.rag==='green').length;
+                const pctGreen = lowestCat.count ? Math.round(greenInLow/lowestCat.count*100) : 0;
+                bullets.push(`<strong>${lowestCat.cat}</strong> is the lowest-risk category (avg ${lowestCat.avg.toFixed(1)})${pctGreen >= 60?`, with ${pctGreen}% of its risks rated Green`:''} — this represents a relative area of stability. ${resolvedCount > 0 ? `The ${resolvedCount} fully-resolved risk${resolvedCount>1?'s':''} across the portfolio demonstrate that the mitigation process is working.` : ''}`);
+            }
+
+            // ── Bullet 8: View-specific insight ──────────────────────────────
+            if (isRadar) {
+                const radarSpike = catList[0];
+                const radarFlat = catList.filter(c=>c.avg < avgScore*0.7);
+                if (radarSpike && radarFlat.length > 0) {
+                    bullets.push(`The radar chart shows a <strong>skewed profile</strong> — ${radarSpike.cat} spikes significantly while ${radarFlat.map(c=>c.cat).join(', ')} ${radarFlat.length>1?'sit':'sits'} well below the portfolio average. A balanced radar would indicate more even risk distribution across the organisation.`);
+                } else {
+                    bullets.push(`The radar chart shows a <strong>broadly even profile</strong> across categories — no single area dominates disproportionately, suggesting risk is distributed rather than concentrated in one domain.`);
+                }
+            } else {
+                const densestCat = catList.sort((a,b)=>b.count-a.count)[0];
+                bullets.push(`The risk summary shows <strong>${densestCat.cat}</strong> has the largest volume of risks (${densestCat.count} items). Attention to both frequency and severity is needed — a high count category with moderate scores can accumulate into a material aggregate burden.`);
+            }
+
+            return bullets.filter(b => b); // remove any empty bullets
         }
 
         const _origToggleRadar = toggleRadar;
