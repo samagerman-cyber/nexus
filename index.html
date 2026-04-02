@@ -4991,23 +4991,25 @@
         if (savedRisks) {
             try {
                 risks = JSON.parse(savedRisks);
-                // Normalise numeric fields that may have been stored as "N - Label" strings
+                // Normalise all numeric fields and recalculate derived values
                 risks.forEach(risk => {
-                    risk.proximity = parseInt(String(risk.proximity)) || 0;
-                    risk.likelihood = parseInt(String(risk.likelihood)) || 1;
-                    risk.impact = parseInt(String(risk.impact)) || 1;
+                    risk.proximity   = parseInt(String(risk.proximity))   || 0;
+                    risk.likelihood  = parseInt(String(risk.likelihood))  || 1;
+                    risk.impact      = parseInt(String(risk.impact))      || 1;
+                    // Recalculate riskScore — handles missing, NaN, or stale values
+                    risk.riskScore   = parseFloat(calculateRiskScore(
+                        risk.likelihood, risk.impact, risk.proximity, risk.mitigationStatus || '1 - None'
+                    ));
+                    if (!risk.rag) {
+                        risk.rag = calculateRAG(risk.likelihood, risk.impact, risk.proximity, risk.mitigationStatus);
+                    }
                 });
             } catch (error) {
                 console.error('Error loading risks from localStorage:', error);
             }
         }
 
-        // Calculate RAG status only for risks that don't have one (preserve imported RAG values)
-        risks.forEach(risk => {
-            if (!risk.rag) {
-                risk.rag = calculateRAG(risk.likelihood, risk.impact, risk.proximity, risk.mitigationStatus);
-            }
-        });
+        // RAG and riskScore now calculated in the localStorage load block above
 
         /**
          * Toggle Meeting Mode on/off
@@ -5890,9 +5892,16 @@
                 processedRow.mitigationStatus = processedRow.mitigationStatus || '1 - None';
                 processedRow.lastModified = new Date().toISOString();
 
+                // Always recalculate riskScore from normalised numeric fields
+                processedRow.riskScore = parseFloat(calculateRiskScore(
+                    processedRow.likelihood,
+                    processedRow.impact,
+                    processedRow.proximity,
+                    processedRow.mitigationStatus
+                ));
+
                 // Normalize and validate RAG value
                 if (processedRow.rag) {
-                    // Normalize RAG from various Excel formats (emoji, text, formula)
                     processedRow.rag = normalizeRAG(processedRow.rag);
                 }
                 
@@ -6789,13 +6798,14 @@
                 ragCounts[r.rag] = (ragCounts[r.rag] || 0) + 1;
                 const cat = r.category || 'Unknown';
                 if (!catScores[cat]) catScores[cat] = { total: 0, count: 0 };
-                const score = (r.riskScore && !isNaN(r.riskScore))
+                // riskScore is now always a number after normalisation — use directly
+                const score = (r.riskScore && !isNaN(Number(r.riskScore)))
                     ? Number(r.riskScore)
-                    : calculateRiskScore(
+                    : parseFloat(calculateRiskScore(
                         parseInt(String(r.likelihood))||1,
                         parseInt(String(r.impact))||1,
                         parseInt(String(r.proximity))||3,
-                        r.mitigationStatus||'1 - None');
+                        r.mitigationStatus||'1 - None')) || 0;
                 catScores[cat].total += score;
                 catScores[cat].count++;
             });
