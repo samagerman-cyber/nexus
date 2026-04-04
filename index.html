@@ -1474,26 +1474,105 @@
             background-repeat: no-repeat;
         }
 
-        .nexus-landing-btn {
+        /* Landing page overlay */
+        .nexus-landing-overlay {
             position: absolute;
-            /* Position over "Explore the Platform" button in the image */
-            top: 27%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: transparent;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(5, 15, 35, 0.72) 0%,
+                rgba(5, 15, 35, 0.55) 40%,
+                rgba(5, 15, 35, 0.70) 100%
+            );
+            z-index: 1;
+        }
+
+        /* Content wrapper */
+        .nexus-landing-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            padding-top: 36px;
+            text-align: center;
+            color: white;
+        }
+
+        /* NEXUS wordmark */
+        .nexus-landing-wordmark {
+            font-size: clamp(3.5rem, 8vw, 6.5rem);
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
+            color: #fff;
+            text-shadow: 0 2px 24px rgba(0,0,0,0.6);
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+
+        .nexus-landing-wordmark .nx-x {
+            color: #00d4c8;
+            font-style: italic;
+        }
+
+        /* "ACTIVE INFRASTRUCTURE GOVERNANCE" */
+        .nexus-landing-subtitle {
+            font-size: clamp(0.9rem, 2.2vw, 1.45rem);
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #fff;
+            margin-top: 4px;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+        }
+
+        /* Tagline */
+        .nexus-landing-tagline {
+            font-size: clamp(0.75rem, 1.4vw, 1rem);
+            font-weight: 300;
+            color: rgba(255,255,255,0.88);
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Explore button */
+        .nexus-landing-btn {
+            margin-top: 16px;
+            padding: 13px 34px;
+            background: #00bfb3;
+            color: white;
             border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             cursor: pointer;
-            width: 220px;
-            height: 70px;
-            border-radius: 4px;
-            z-index: 10;
-            opacity: 0;
+            transition: all 0.22s ease;
+            box-shadow: 0 4px 18px rgba(0,191,179,0.45);
         }
 
         .nexus-landing-btn:hover {
-            background: rgba(255,255,255,0.08);
-            opacity: 1 !important;
+            background: #00d4c8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0,212,200,0.55);
         }
+
+        /* Network diagram */
+        .nexus-network-diagram {
+            position: relative;
+            width: min(520px, 90vw);
+            height: min(340px, 50vw);
+            margin-top: 20px;
+        }
+
+        .nexus-network-diagram svg {
+            width: 100%;
+            height: 100%;
+        }
+
         /* ===== END NEXUS LANDING PAGE ===== */
 
         /* ===== HOME AI INPUT FLOW ===== */
@@ -4205,8 +4284,99 @@
     <!-- NEXUS Landing Page -->
     <div class="nexus-landing" id="nexusLanding">
         <div class="nexus-landing-bg"></div>
-        <button class="nexus-landing-btn" id="nexusExploreBtn"
-            onclick="enterApp()" title="Explore the Platform"></button>
+        <div class="nexus-landing-overlay"></div>
+        <div class="nexus-landing-content">
+            <!-- Wordmark -->
+            <div class="nexus-landing-wordmark">NE<span class="nx-x">X</span>US</div>
+            <div class="nexus-landing-subtitle">Active Infrastructure Governance</div>
+            <div class="nexus-landing-tagline">The Governance Operating System for Critical Public Services</div>
+
+            <!-- Explore button -->
+            <button class="nexus-landing-btn" id="nexusExploreBtn"
+                onclick="enterApp()" title="Explore the Platform">Explore the Platform</button>
+
+            <!-- Network Diagram -->
+            <div class="nexus-network-diagram">
+                <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="nodeGlow">
+                            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Connection lines -->
+                    <!-- Center to Strategic Vision (top-left) -->
+                    <line x1="260" y1="170" x2="118" y2="90" stroke="#00d4c8" stroke-width="1.5" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Center to Operational Practice (top-right) -->
+                    <line x1="260" y1="170" x2="402" y2="90" stroke="#f59e0b" stroke-width="1.5" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Center to Accountability (bottom-left) -->
+                    <line x1="260" y1="170" x2="118" y2="255" stroke="#00d4c8" stroke-width="1.5" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Center to Public Mandate (bottom-right) -->
+                    <line x1="260" y1="170" x2="402" y2="255" stroke="#f59e0b" stroke-width="1.5" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Outer ring connection lines -->
+                    <line x1="118" y1="90" x2="402" y2="90" stroke="rgba(0,212,200,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="118" y1="255" x2="402" y2="255" stroke="rgba(0,212,200,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="118" y1="90" x2="118" y2="255" stroke="rgba(0,212,200,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="402" y1="90" x2="402" y2="255" stroke="rgba(0,212,200,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+
+                    <!-- "Leading indicators" labels on lines -->
+                    <text x="167" y="122" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle" transform="rotate(-26,167,122)">Leading indicators</text>
+                    <text x="353" y="122" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle" transform="rotate(26,353,122)">Leading indicator</text>
+                    <text x="167" y="222" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle" transform="rotate(26,167,222)">Leading indicators</text>
+                    <text x="353" y="222" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle" transform="rotate(-26,353,222)">Leading indicator</text>
+
+                    <!-- Outer ring / orbit circle -->
+                    <circle cx="260" cy="170" r="130" fill="none" stroke="rgba(0,212,200,0.18)" stroke-width="1.5"/>
+
+                    <!-- Node: Strategic Vision (top-left) -->
+                    <circle cx="118" cy="90" r="44" fill="rgba(0,180,170,0.18)" stroke="#00d4c8" stroke-width="1.5" filter="url(#nodeGlow)"/>
+                    <circle cx="118" cy="90" r="32" fill="rgba(0,180,170,0.28)" stroke="#00d4c8" stroke-width="1"/>
+                    <text x="118" y="83" fill="white" font-size="11" font-weight="700" text-anchor="middle">STRATEGIC</text>
+                    <text x="118" y="96" fill="white" font-size="11" font-weight="700" text-anchor="middle">VISION</text>
+                    <text x="118" y="108" fill="rgba(255,255,255,0.75)" font-size="9" text-anchor="middle">(Board)</text>
+
+                    <!-- Node: Operational Practice (top-right) -->
+                    <circle cx="402" cy="90" r="44" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.5" filter="url(#nodeGlow)"/>
+                    <circle cx="402" cy="90" r="32" fill="rgba(245,158,11,0.22)" stroke="#f59e0b" stroke-width="1"/>
+                    <text x="402" y="80" fill="white" font-size="10" font-weight="700" text-anchor="middle">OPERATIONAL</text>
+                    <text x="402" y="93" fill="white" font-size="10" font-weight="700" text-anchor="middle">PRACTICE</text>
+                    <text x="402" y="106" fill="rgba(255,255,255,0.75)" font-size="9" text-anchor="middle">(Front-line)</text>
+
+                    <!-- Node: Accountability (bottom-left) -->
+                    <circle cx="118" cy="255" r="44" fill="rgba(0,180,170,0.18)" stroke="#00d4c8" stroke-width="1.5" filter="url(#nodeGlow)"/>
+                    <circle cx="118" cy="255" r="32" fill="rgba(0,180,170,0.28)" stroke="#00d4c8" stroke-width="1"/>
+                    <text x="118" y="252" fill="white" font-size="11" font-weight="700" text-anchor="middle">ACCOUNT-</text>
+                    <text x="118" y="265" fill="white" font-size="11" font-weight="700" text-anchor="middle">ABILITY</text>
+
+                    <!-- Node: Public Mandate (bottom-right) -->
+                    <circle cx="402" cy="255" r="44" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.5" filter="url(#nodeGlow)"/>
+                    <circle cx="402" cy="255" r="32" fill="rgba(245,158,11,0.22)" stroke="#f59e0b" stroke-width="1"/>
+                    <text x="402" y="252" fill="white" font-size="11" font-weight="700" text-anchor="middle">PUBLIC</text>
+                    <text x="402" y="265" fill="white" font-size="11" font-weight="700" text-anchor="middle">MANDATE</text>
+
+                    <!-- Center hub glow rings -->
+                    <circle cx="260" cy="170" r="62" fill="rgba(0,212,200,0.08)" stroke="rgba(0,212,200,0.35)" stroke-width="1.5"/>
+                    <circle cx="260" cy="170" r="48" fill="rgba(0,212,200,0.12)" stroke="rgba(0,212,200,0.5)" stroke-width="1.5"/>
+                    <circle cx="260" cy="170" r="34" fill="rgba(5,20,50,0.6)" stroke="#00d4c8" stroke-width="2" filter="url(#nodeGlow)"/>
+
+                    <!-- Center NEXUS text -->
+                    <text x="260" y="164" fill="white" font-size="13" font-weight="900" text-anchor="middle" letter-spacing="-0.5">NE</text>
+                    <text x="288" y="164" fill="#00d4c8" font-size="14" font-weight="900" font-style="italic">X</text>
+                    <text x="299" y="164" fill="white" font-size="13" font-weight="900">US</text>
+
+                    <!-- Animated dots on center hub -->
+                    <circle cx="260" cy="136" r="4" fill="#00d4c8" opacity="0.9" filter="url(#glow)"/>
+                    <circle cx="260" cy="204" r="4" fill="#00d4c8" opacity="0.9" filter="url(#glow)"/>
+                    <circle cx="226" cy="170" r="4" fill="#f59e0b" opacity="0.9" filter="url(#glow)"/>
+                    <circle cx="294" cy="170" r="4" fill="#f59e0b" opacity="0.9" filter="url(#glow)"/>
+                </svg>
+            </div>
+        </div>
     </div>
 
     <div class="app-shell">
@@ -7253,6 +7423,9 @@
             document.getElementById('homeAiSubmit').classList.remove('visible');
             startBorderAnimation();
 
+            // Minimum 2-second crunch delay so the animation is always visible
+            const _minDelay = new Promise(r => setTimeout(r, 2000));
+
             try {
                 const prompt = `You are a senior risk analyst for a technology company. Analyse the following input and classify it accurately.
 
@@ -7313,6 +7486,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 _aiAnalysisResult = localAiAnalysis(text);
             }
 
+            await _minDelay; // ensure animation plays for at least 2 seconds
             stopBorderAnimation();
             box.classList.remove('analysing');
             showAiSummary(_aiAnalysisResult);
