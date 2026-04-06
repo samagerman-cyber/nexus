@@ -1487,6 +1487,30 @@
         }
         .ribbon-flex-space { flex: 1; }
 
+        /* Quad Chart title group pinned to far right of ribbon */
+        .quad-ribbon-title-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            padding-left: 16px;
+            border-left: 1.5px solid #dce3ea;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        .quad-ribbon-heading {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 0.2px;
+        }
+        .quad-ribbon-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: #7f8c8d;
+            letter-spacing: 0.15px;
+        }
+
         /* Unified ribbon button */
         .rbtn {
             display: inline-flex;
@@ -3693,13 +3717,15 @@
             text-align: center;
         }
 
-        .quadrant-subtitle.filterable {
+        .quadrant-subtitle.filterable,
+        .quad-ribbon-subtitle.filterable {
             cursor: help;
             border-bottom: 1px dashed #999;
             padding-bottom: 1px;
         }
 
-        .quadrant-subtitle.filterable:hover::after {
+        .quadrant-subtitle.filterable:hover::after,
+        .quad-ribbon-subtitle.filterable:hover::after {
             content: attr(data-tooltip);
             position: absolute;
             top: calc(100% + 8px);
@@ -3721,7 +3747,8 @@
             pointer-events: none;
         }
 
-        .quadrant-subtitle.filterable:hover::before {
+        .quadrant-subtitle.filterable:hover::before,
+        .quad-ribbon-subtitle.filterable:hover::before {
             content: '';
             position: absolute;
             top: calc(100% + 2px);
@@ -5955,16 +5982,13 @@
                     <button class="rbtn rbtn-toggle" id="legendToggle" onclick="toggleQuadLegend()">Hide Legend</button>
                     <button class="rbtn rbtn-toggle" id="mitigationToggle">Show Post-Mitigation</button>
                     <button class="rbtn rbtn-toggle" id="quadCommentaryToggleBtn" onclick="toggleQuadCommentary()">💬 Show Commentary</button>
+                    <div class="ribbon-flex-space"></div>
+                    <div class="quad-ribbon-title-wrap">
+                        <span class="quad-ribbon-heading">Likelihood vs Impact</span>
+                        <span class="quad-ribbon-subtitle" id="quadrantSubtitle">All Categories (5)</span>
+                    </div>
                 </div>
                 <div class="tab-body">
-                <div class="quadrant-header" id="quadrantHeader" style="max-width:830px;margin:0 auto;padding-left:80px;box-sizing:border-box;">
-                    <div class="quadrant-title-bar">
-                        <h1 class="quadrant-title">Likelihood vs Impact</h1>
-                    </div>
-                    <div class="quadrant-subtitle-wrapper">
-                        <span class="quadrant-subtitle" id="quadrantSubtitle">All Categories (5)</span>
-                    </div>
-                </div>
                 <div class="quadrant-main-container" id="quadMainContainer">
 
                     <div class="quadrant-content">
@@ -8791,7 +8815,6 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 const style = document.createElement('style');
                 style.id = 'quadCommentaryLayoutStyle';
                 style.textContent =
-                    '#quadrantHeader { width:830px !important; max-width:830px !important; margin-left:0 !important; margin-right:0 !important; }' +
                     '#quadMainContainer { display:flex !important; flex-direction:row !important; align-items:flex-start !important; gap:0 !important; }' +
                     '#quadMainContainer .quadrant-content { width:65% !important; max-width:65% !important; min-width:0 !important; flex-shrink:0 !important; overflow:hidden !important; justify-content:flex-start !important; }' +
                     '#quadCommentaryCol { display:flex !important; flex-direction:column !important; width:35% !important; max-width:35% !important; min-width:240px !important; padding-left:20px !important; box-sizing:border-box !important; flex-shrink:0 !important; }' +
