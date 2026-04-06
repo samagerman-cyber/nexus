@@ -4922,7 +4922,7 @@
             <div class="nexus-landing-divider"></div>
             <div class="nexus-landing-tagline">The Governance Operating System for Critical Public Services</div>
             <button class="nexus-landing-btn" id="nexusExploreBtn"
-                onclick="enterApp()" title="Explore the Platform">Explore the Platform</button>
+                onclick="enterApp()" title="Explore Nexus">Explore Nexus</button>
         </div>
     </div>
 
@@ -8087,6 +8087,7 @@
             } else if (tabName === 'quadrant') {
                 applyRiskRegisterFilterToQuadrant();
                 updateQuadrantChart();
+                openQuadChartDefaults();
             }
         }
 
@@ -10705,6 +10706,23 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
                 btn.textContent = 'Show Legend';
             }
         }
+
+        // Ensure Categories panel and Legend are open when landing on Quad Chart
+        function openQuadChartDefaults() {
+            // Open category panel
+            initCatPanel();
+            const panel  = document.getElementById('quadCatPanel');
+            const catBtn = document.getElementById('catFilterToggle');
+            const mini   = document.getElementById('miniQuadGrid');
+            if (panel)  { panel.classList.remove('hidden'); _catPanelOpen = true; }
+            if (catBtn) catBtn.textContent = 'Hide Categories';
+            if (mini)   mini.classList.add('visible');
+            // Show legend
+            const legend    = document.getElementById('quadLegend');
+            const legendBtn = document.getElementById('legendToggle');
+            if (legend)    legend.classList.remove('hidden');
+            if (legendBtn) legendBtn.textContent = 'Hide Legend';
+        }
         // ==================== END QUADRANT LEGEND TOGGLE ====================
 
         // ==================== HOME PAGE & SIDEBAR ====================
@@ -11103,11 +11121,25 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
 
             if (view === 'quadrant') {
                 sidebarNav('quadrant');
+                // Port commentary state from Dashboard — openQuadChartDefaults() already ran
+                // inside showTab, so defaults are set; now sync commentary on top
+                if (_commentaryVisible && !_quadCommentaryVisible) {
+                    toggleQuadCommentary();
+                } else if (!_commentaryVisible && _quadCommentaryVisible) {
+                    toggleQuadCommentary();
+                }
                 return;
             }
 
             // Make sure we're on the dashboard
             sidebarNav('dashboard');
+
+            // Port commentary state back from Quad Chart → Dashboard
+            if (_quadCommentaryVisible && !_commentaryVisible) {
+                toggleCommentary();
+            } else if (!_quadCommentaryVisible && _commentaryVisible) {
+                toggleCommentary();
+            }
 
             const radarSection        = document.getElementById('radarSection');
             const categoriesSection   = document.querySelector('.risk-categories-section');
