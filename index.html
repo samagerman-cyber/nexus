@@ -8129,7 +8129,10 @@
             }
         }
 
-        // Normalise any proximity value (number, numeric string, or text label) to integer 0-5
+        // Normalise any proximity value (number, numeric string, or text label) to integer 0-5.
+        // The Excel source file uses a 1-6 scale (5=Unknown, 6=SA Review) while the app uses
+        // 0-5 (0=Unknown, 5=SA Review). We always resolve by label text first so the numeric
+        // prefix in strings like "6 - SA Review" or "5 - Unknown" never causes a mis-mapping.
         function normalizeProximity(value) {
             if (value === undefined || value === null || value === '') return 3;
             const textMap = {
@@ -8138,14 +8141,21 @@
                 'longterm': 4, 'long-term': 4, 'long term': 4,
                 'sa review': 5, 'sareview': 5, 'strategic': 5
             };
-            const parsed = parseInt(String(value));
-            if (!isNaN(parsed) && parsed >= 0 && parsed <= 5) return parsed;
-            const key = String(value).trim().toLowerCase();
+            const str = String(value).trim();
+            // 1. Strip any leading "N - " prefix and look up the label word(s) first.
+            //    Correctly maps "6 - SA Review" → 5  and  "5 - Unknown" → 0.
+            const labelMatch = str.match(/^\d+\s*[-\u2013]\s*(.+)$/);
+            if (labelMatch) {
+                const label = labelMatch[1].trim().toLowerCase();
+                if (textMap[label] !== undefined) return textMap[label];
+            }
+            // 2. Try bare text (e.g. "SA Review", "Midterm").
+            const key = str.toLowerCase();
             if (textMap[key] !== undefined) return textMap[key];
-            // Handle "3 - Midterm" style strings
-            const leadingNum = parseInt(String(value));
-            if (!isNaN(leadingNum) && leadingNum >= 0 && leadingNum <= 5) return leadingNum;
-            return 3; // default: Midterm (matches form defaults)
+            // 3. Fall back to numeric only if already within the app's 0-5 range.
+            const parsed = parseInt(str);
+            if (!isNaN(parsed) && parsed >= 0 && parsed <= 5) return parsed;
+            return 3; // default: Midterm
         }
 
         function getProximityLabel(proximity) {
@@ -9032,10 +9042,31 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             listEl.innerHTML = '';
             errEl.style.display = 'none';
 
+            // Determine which risks are in scope — mirror updateQuadrantChart logic
+            const allCheckboxes = document.querySelectorAll('.cat-checkbox');
+            const checked = Array.from(document.querySelectorAll('.cat-checkbox:checked')).map(cb => cb.value);
+            const panelInitialised = allCheckboxes.length > 0;
+            let scopeRisks;
+            if (!panelInitialised || checked.length === QUAD_CATEGORIES.length) {
+                scopeRisks = risks;
+            } else if (checked.length === 0) {
+                scopeRisks = [];
+            } else {
+                scopeRisks = risks.filter(r => checked.includes(r.category));
+            }
+
+            // Build scope label and single-category flag
+            const isSingleCat = panelInitialised && checked.length === 1;
+            const scopeLabel  = isSingleCat
+                ? checked[0]
+                : (!panelInitialised || checked.length === QUAD_CATEGORIES.length)
+                    ? 'the full portfolio'
+                    : `${checked.length} selected categories`;
+
             const ragCounts = { red: 0, amber: 0, green: 0 };
             const catScores = {};
             const mitStatus = {};
-            risks.forEach(function(r) {
+            scopeRisks.forEach(function(r) {
                 ragCounts[r.rag] = (ragCounts[r.rag] || 0) + 1;
                 const cat = r.category || 'Unknown';
                 if (!catScores[cat]) catScores[cat] = { total: 0, count: 0 };
@@ -9054,7 +9085,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
 
             try {
                 await new Promise(function(res) { setTimeout(res, 400); });
-                const bullets = generateLocalCommentary(risks, false, ragCounts, catScores, mitStatus);
+                const bullets = generateLocalCommentary(scopeRisks, false, ragCounts, catScores, mitStatus, scopeLabel, isSingleCat);
                 loadEl.style.display = 'none';
                 listEl.innerHTML = bullets.map(function(b) {
                     return '<li class="commentary-bullet">' + b + '</li>';
@@ -9070,7 +9101,42 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             if (!_commentaryVisible) return;
             const isRadar = document.getElementById('radarSection') &&
                             !document.getElementById('radarSection').classList.contains('hidden');
-            const cacheKey = isRadar ? 'radar' : 'summary';
+
+            // Determine scope from active filter dropdowns
+            const catFilterEl = document.getElementById('categoryFilter');
+            const ragFilterEl = document.getElementById('ragFilter');
+            const catFilter   = catFilterEl ? catFilterEl.value : '';
+            const ragFilter   = ragFilterEl ? ragFilterEl.value : '';
+
+            // Build filtered risk set matching what the chart shows
+            let scopeRisks = [...risks];
+            if (catFilter) scopeRisks = scopeRisks.filter(r => r.category === catFilter);
+            if (ragFilter) scopeRisks = scopeRisks.filter(r => r.rag === ragFilter);
+
+            // Human-readable scope label
+            const isSingleCat = !!catFilter && !ragFilter;
+            let scopeLabel;
+            if (catFilter && ragFilter) {
+                scopeLabel = `${ragFilter.charAt(0).toUpperCase() + ragFilter.slice(1)} risks within ${catFilter}`;
+            } else if (catFilter) {
+                scopeLabel = catFilter;
+            } else if (ragFilter) {
+                scopeLabel = `${ragFilter.charAt(0).toUpperCase() + ragFilter.slice(1)} risks (all categories)`;
+            } else {
+                scopeLabel = 'the full portfolio';
+            }
+
+            // Filter-aware cache key
+            const cacheKey = `${isRadar ? 'radar' : 'summary'}|${catFilter}|${ragFilter}`;
+            if (_commentaryCache[cacheKey]) {
+                const loadEl = document.getElementById('commentaryLoading');
+                const listEl = document.getElementById('commentaryBullets');
+                if (loadEl) loadEl.style.display = 'none';
+                if (listEl) listEl.innerHTML = _commentaryCache[cacheKey].map(b =>
+                    `<li class="commentary-bullet">${b}</li>`
+                ).join('');
+                return;
+            }
 
             const loadEl  = document.getElementById('commentaryLoading');
             const listEl  = document.getElementById('commentaryBullets');
@@ -9080,15 +9146,14 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             listEl.innerHTML = '';
             errEl.style.display = 'none';
 
-            // Build a concise data summary for the prompt
-            const total = risks.length;
+            // Compute stats from scoped risk set
             const ragCounts = { red: 0, amber: 0, green: 0 };
             const catScores = {};
-            risks.forEach(r => {
+            const mitStatus = {};
+            scopeRisks.forEach(r => {
                 ragCounts[r.rag] = (ragCounts[r.rag] || 0) + 1;
                 const cat = r.category || 'Unknown';
                 if (!catScores[cat]) catScores[cat] = { total: 0, count: 0 };
-                // riskScore is now always a number after normalisation — use directly
                 const score = (r.riskScore && !isNaN(Number(r.riskScore)))
                     ? Number(r.riskScore)
                     : parseFloat(calculateRiskScore(
@@ -9098,38 +9163,13 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                         r.mitigationStatus||'1 - None')) || 0;
                 catScores[cat].total += score;
                 catScores[cat].count++;
-            });
-            const catSummary = Object.entries(catScores)
-                .map(([cat, d]) => `${cat}: avg score ${(d.total/d.count).toFixed(1)}, ${d.count} risks`)
-                .join('; ');
-            const topRed = risks.filter(r => r.rag === 'red')
-                .sort((a,b) => (b.riskScore||0)-(a.riskScore||0))
-                .slice(0,3)
-                .map(r => `"${(r.description||'').slice(0,60)}" (score ${r.riskScore||'?'})`)
-                .join(', ');
-            const mitStatus = {};
-            risks.forEach(r => {
                 const s = (r.mitigationStatus||'Unknown').replace(/^\d+ - /,'');
                 mitStatus[s] = (mitStatus[s]||0) + 1;
             });
-            const mitSummary = Object.entries(mitStatus).map(([k,v]) => `${k}: ${v}`).join(', ');
-            const viewLabel = isRadar ? 'risk radar chart' : 'risk summary table';
 
-            const prompt = `You are analysing a risk register for a technology company. 
-Current view: ${viewLabel}.
-Total risks: ${total}. RAG status: Red=${ragCounts.red}, Amber=${ragCounts.amber}, Green=${ragCounts.green}.
-Category breakdown: ${catSummary}.
-Top red risks: ${topRed || 'none'}.
-Mitigation status distribution: ${mitSummary}.
-
-Generate exactly 7 concise bullet points (no bullet symbols, one per line) that summarise what this data tells a senior executive. Focus on: overall risk posture, highest concern areas, mitigation gaps, and any notable patterns. Be direct and specific. No preamble, no headers — just the 7 bullet points, one per line.`;
-
-            // Generate commentary locally from risk data
             try {
-                await new Promise(r => setTimeout(r, 400)); // brief pause for UX
-
-                const bullets = generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus);
-
+                await new Promise(r => setTimeout(r, 400));
+                const bullets = generateLocalCommentary(scopeRisks, isRadar, ragCounts, catScores, mitStatus, scopeLabel, isSingleCat);
                 loadEl.style.display = 'none';
                 listEl.innerHTML = bullets.map(b =>
                     `<li class="commentary-bullet">${b}</li>`
@@ -9143,9 +9183,14 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
         }
 
         // Refresh commentary when radar/summary view switches
-        function generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus) {
+        function generateLocalCommentary(risks, isRadar, ragCounts, catScores, mitStatus, scopeLabel, isSingleCat) {
+            scopeLabel  = scopeLabel  || 'the full portfolio';
+            isSingleCat = !!isSingleCat;
+            const isFiltered = scopeLabel !== 'the full portfolio';
+            const scopeRef   = isFiltered ? `Within <strong>${scopeLabel}</strong>` : 'Across the portfolio';
+
             const total = risks.length;
-            if (total === 0) return ['No risks are currently loaded in the register.'];
+            if (total === 0) return [`No risks are currently in scope${isFiltered ? ` for <strong>${scopeLabel}</strong>` : ''}. Adjust your filters or sync data to populate the register.`];
 
             const redPct   = Math.round((ragCounts.red   || 0) / total * 100);
             const amberPct = Math.round((ragCounts.amber || 0) / total * 100);
@@ -9210,10 +9255,22 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
             // ── Bullet 1: Overall posture — direct, calibrated ────────────────
             const postureWord = redPct >= 25 ? 'HIGH' : redPct >= 10 ? 'ELEVATED' : redPct > 0 ? 'CAUTIONARY' : 'STABLE';
             const postureColour = redPct >= 25 ? '#c0392b' : redPct >= 10 ? '#d68910' : redPct > 0 ? '#d68910' : '#1e8449';
-            bullets.push(`Risk posture is <strong style="color:${postureColour}">${postureWord}</strong> — ${ragCounts.red||0} Red, ${ragCounts.amber||0} Amber, ${ragCounts.green||0} Green across ${total} risks (avg score ${avgScore.toFixed(1)}, peak ${maxScore.toFixed(1)}). ${redPct > 0 ? `Red items represent ${redPct}% of the portfolio.` : 'No critical breaches recorded.'}`);
+            const posturePrefix = isFiltered ? `${scopeRef}, risk posture is` : 'Risk posture is';
+            bullets.push(`${posturePrefix} <strong style="color:${postureColour}">${postureWord}</strong> — ${ragCounts.red||0} Red, ${ragCounts.amber||0} Amber, ${ragCounts.green||0} Green across ${total} risk${total !== 1 ? 's' : ''} (avg score ${avgScore.toFixed(1)}, peak ${maxScore.toFixed(1)}). ${redPct > 0 ? `Red items represent ${redPct}% of this view.` : 'No critical breaches recorded.'}`);
 
-            // ── Bullet 2: Hottest category with context ───────────────────────
-            if (topCat) {
+            // ── Bullet 2: Top risks drill-down (single-cat) OR hottest category ──
+            if (isSingleCat) {
+                // Deep-dive: rank the top risks within this single domain
+                const topRisks = [...risks].sort((a,b)=>(Number(b.riskScore)||0)-(Number(a.riskScore)||0)).slice(0,3);
+                if (topRisks.length > 0) {
+                    const topList = topRisks.map((r,i) => {
+                        const label = `"${(r.description||'').slice(0,50)}${(r.description||'').length>50?'…':''}"`;
+                        return `${label} (score ${Number(r.riskScore||0).toFixed(1)}, ${r.rag.toUpperCase()})`;
+                    }).join('; ');
+                    const hasRed = topRisks.some(r=>r.rag==='red');
+                    bullets.push(`<strong>Highest-scoring risks in scope:</strong> ${topList}. ${hasRed ? 'Red-rated items in the top tier warrant priority governance attention.' : 'No Red-rated items in the top three — exposure is contained within this domain.'}`);
+                }
+            } else if (topCat) {
                 const redInTop = risks.filter(r=>r.category===topCat.cat&&r.rag==='red').length;
                 const gap = topCat.avg - (catList[1]?.avg||0);
                 bullets.push(`<strong>${topCat.cat}</strong> is the highest-risk category (avg ${topCat.avg.toFixed(1)}, ${topCat.count} risks${redInTop>0?`, ${redInTop} Red`:''})${gap > 2 ? ` — notably ${gap.toFixed(1)} points above the next category` : ''}. ${aboveAvgCats.length > 1 ? `${aboveAvgCats.length} of ${catList.length} categories are above the portfolio average.` : 'All other categories are at or below the portfolio average.'}`);
@@ -9240,12 +9297,13 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
             }
 
             // ── Bullet 5: Urgency / proximity ────────────────────────────────
+            const proxScope = isFiltered ? `${scopeRef}, ` : '';
             if (immediateRisks.length > 0) {
-                bullets.push(`<strong>${immediateRisks.length} non-green risk${immediateRisks.length>1?'s':''}</strong> are rated Immediate or Imminent proximity — these demand near-term management attention${saRisks.length>0?`, alongside ${saRisks.length} risk${saRisks.length>1?'s':''} flagged for SA Review`:''}. ${longtermRisks.length > 0 ? `${longtermRisks.length} long-term risks should be monitored but are not time-critical.` : ''}`);
+                bullets.push(`${proxScope}<strong>${immediateRisks.length} non-green risk${immediateRisks.length>1?'s':''}</strong> are rated Immediate or Imminent proximity — these demand near-term management attention${saRisks.length>0?`, alongside ${saRisks.length} risk${saRisks.length>1?'s':''} flagged for SA Review`:''}. ${longtermRisks.length > 0 ? `${longtermRisks.length} long-term risk${longtermRisks.length>1?'s':''} should be monitored but are not time-critical.` : ''}`);
             } else if (saRisks.length > 0) {
-                bullets.push(`<strong>${saRisks.length} risk${saRisks.length>1?'s are':' is'} flagged for SA Review</strong> — these warrant a dedicated agenda item at the next strategic session. No risks are rated as Immediate or Imminent proximity.`);
+                bullets.push(`${proxScope}<strong>${saRisks.length} risk${saRisks.length>1?'s are':' is'} flagged for SA Review</strong> — these warrant a dedicated agenda item at the next strategic session. No risks are rated as Immediate or Imminent proximity.`);
             } else {
-                bullets.push(`No risks are currently rated as Immediate, Imminent, or SA Review — the near-term escalation pipeline is clear. ${longtermRisks.length>0?`${longtermRisks.length} longer-horizon risks should remain on the monitoring radar.`:''}`);
+                bullets.push(`${proxScope}no risks are rated as Immediate, Imminent, or SA Review — the near-term escalation pipeline is clear. ${longtermRisks.length>0?`${longtermRisks.length} longer-horizon risk${longtermRisks.length>1?'s':''} should remain on the monitoring radar.`:''}`);
             }
 
             // ── Bullet 6: Owner accountability ───────────────────────────────
@@ -9268,16 +9326,31 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
 
             // ── Bullet 8: View-specific insight ──────────────────────────────
             if (isRadar) {
-                const radarSpike = catList[0];
-                const radarFlat = catList.filter(c=>c.avg < avgScore*0.7);
-                if (radarSpike && radarFlat.length > 0) {
-                    bullets.push(`The radar chart shows a <strong>skewed profile</strong> — ${radarSpike.cat} spikes significantly while ${radarFlat.map(c=>c.cat).join(', ')} ${radarFlat.length>1?'sit':'sits'} well below the portfolio average. A balanced radar would indicate more even risk distribution across the organisation.`);
+                if (isSingleCat) {
+                    // Radar + single category: axis breakdown isn't meaningful; show trend instead
+                    const highScore  = risks.filter(r=>(Number(r.riskScore)||0) >= 15).length;
+                    const midScore   = risks.filter(r=>(Number(r.riskScore)||0) >= 8 && (Number(r.riskScore)||0) < 15).length;
+                    const lowScore   = risks.filter(r=>(Number(r.riskScore)||0) < 8).length;
+                    bullets.push(`Score distribution for <strong>${scopeLabel}</strong>: ${highScore} high-severity (≥15), ${midScore} medium (8–14), ${lowScore} lower (&lt;8). ${highScore > 0 ? 'High-severity items should feature on the next governance agenda.' : 'No high-severity items — exposure is concentrated in the medium-to-lower bands, which is a manageable position.'}`);
                 } else {
-                    bullets.push(`The radar chart shows a <strong>broadly even profile</strong> across categories — no single area dominates disproportionately, suggesting risk is distributed rather than concentrated in one domain.`);
+                    const radarSpike = catList[0];
+                    const radarFlat  = catList.filter(c=>c.avg < avgScore*0.7);
+                    if (radarSpike && radarFlat.length > 0) {
+                        bullets.push(`The radar profile shows a <strong>skewed distribution</strong> — <strong>${radarSpike.cat}</strong> spikes significantly while ${radarFlat.map(c=>`<strong>${c.cat}</strong>`).join(', ')} ${radarFlat.length>1?'sit':'sits'} well below the average. A balanced radar would reflect more even risk distribution across the organisation.`);
+                    } else {
+                        bullets.push(`The radar profile is <strong>broadly even</strong> across categories — no single domain dominates disproportionately, suggesting risk is distributed rather than concentrated in one area.`);
+                    }
                 }
             } else {
-                const densestCat = catList.sort((a,b)=>b.count-a.count)[0];
-                bullets.push(`The risk summary shows <strong>${densestCat.cat}</strong> has the largest volume of risks (${densestCat.count} items). Attention to both frequency and severity is needed — a high count category with moderate scores can accumulate into a material aggregate burden.`);
+                if (isSingleCat) {
+                    const highScore = risks.filter(r=>(Number(r.riskScore)||0) >= 15).length;
+                    const midScore  = risks.filter(r=>(Number(r.riskScore)||0) >= 8 && (Number(r.riskScore)||0) < 15).length;
+                    const lowScore  = risks.filter(r=>(Number(r.riskScore)||0) < 8).length;
+                    bullets.push(`Score distribution within <strong>${scopeLabel}</strong>: ${highScore} high-severity (≥15), ${midScore} medium (8–14), ${lowScore} lower (&lt;8). ${highScore > 0 ? 'High-severity items should be the primary focus of the next governance review.' : 'No high-severity items — risk is concentrated in the medium-to-lower bands, a relatively contained position.'}`);
+                } else {
+                    const densestCat = [...catList].sort((a,b)=>b.count-a.count)[0];
+                    bullets.push(`The risk summary shows <strong>${densestCat.cat}</strong> has the largest volume of risks (${densestCat.count} items). Attention to both frequency and severity is warranted — a high-count category with moderate scores can accumulate into a material aggregate burden.`);
+                }
             }
 
             return bullets.filter(b => b); // remove any empty bullets
@@ -9772,6 +9845,10 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
 
             updateRiskTable(filteredRisks);
             updateSearchCount(filteredRisks.length, searchTerm);
+
+            // Invalidate commentary cache so next open regenerates for the current scope
+            _commentaryCache = {};
+            if (_commentaryVisible) refreshCommentary();
         }
 
         function searchRisks(value) {
@@ -10168,6 +10245,11 @@ Generate exactly 7 concise bullet points (no bullet symbols, one per line) that 
                 const event = new Event('quadrantUpdated');
                 window.dispatchEvent(event);
             }, 50);
+
+            // Refresh commentary to match the current category selection
+            if (typeof _quadCommentaryVisible !== 'undefined' && _quadCommentaryVisible) {
+                refreshQuadCommentary();
+            }
         }
 
         function showRiskTooltip(event, risk) {
