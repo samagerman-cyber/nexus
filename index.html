@@ -2171,6 +2171,75 @@
         .ai-btn-reedit { background: linear-gradient(135deg,#2471a3,#1a5276); color:white; }
         .ai-btn-cancel { background: #e9ecef; color: #555; }
 
+        /* Context cross-reference rows */
+        .ai-context-row { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .ai-context-item {
+            font-size: 11px;
+            line-height: 1.45;
+            padding: 7px 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #ddd;
+        }
+        .ai-context-item.has-matches { border-left-color: #27ae60; }
+        .ai-context-item.no-matches  { color: #aaa; }
+        .ai-context-item-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        .ai-match-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+        .ai-match-tag {
+            display: inline-block;
+            padding: 2px 7px;
+            background: #eaf4ff;
+            border: 1px solid #aed6f1;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #1a5276;
+            font-family: monospace;
+            letter-spacing: 0.3px;
+        }
+        .ai-match-tag.risk-tag {
+            background: #fdf2f8;
+            border-color: #f1948a;
+            color: #922b21;
+            cursor: default;
+        }
+
+        /* Editable risk parameter selects */
+        .ai-params-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+        .ai-param-select {
+            font-size: 11px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            text-align: center;
+            padding: 2px 16px 2px 2px;
+            max-width: 100%;
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23bbb'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0px center;
+            background-size: 14px;
+        }
+        .ai-param-select:focus { outline: 1px solid #cce; border-radius: 3px; }
+        .ai-chip:has(.ai-param-select):hover { border-color: #aed6f1; background: #f0f7ff; }
+
         /* ===== END HOME AI INPUT FLOW ===== */
 
 
@@ -5176,21 +5245,53 @@
                                     <div class="ai-chip-value" id="aiAlignment">—</div>
                                 </div>
                             </div>
+                            <!-- Context: objective & register cross-reference (populated by showAiSummary) -->
+                            <div class="ai-context-row" id="aiContextRow" style="display:none;">
+                                <div class="ai-context-item" id="aiObjMatchItem">
+                                    <div class="ai-context-item-label">📌 Strategic Objectives</div>
+                                    <span id="aiObjMatchText"></span>
+                                    <div class="ai-match-tags" id="aiObjMatchTags"></div>
+                                </div>
+                                <div class="ai-context-item" id="aiRegMatchItem">
+                                    <div class="ai-context-item-label">🗂 Existing Register</div>
+                                    <span id="aiRegMatchText"></span>
+                                    <div class="ai-match-tags" id="aiRegMatchTags"></div>
+                                </div>
+                            </div>
                             <!-- Risk parameters — shown only when classification = Risk -->
                             <div id="aiRiskParams" style="display:none;">
-                                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999;margin-bottom:6px;">Suggested Risk Parameters</div>
+                                <div class="ai-params-label">Suggested Risk Parameters <span style="font-weight:400;font-size:8px;color:#bbb;text-transform:none;letter-spacing:0;">— tap to override</span></div>
                                 <div class="ai-summary-chips" style="gap:6px;">
                                     <div class="ai-chip" style="min-width:80px;">
                                         <div class="ai-chip-label">Likelihood</div>
-                                        <div class="ai-chip-value" id="aiLikelihood" style="font-size:11px;color:#2471a3;">—</div>
+                                        <select id="aiLikelihoodSel" class="ai-param-select" style="color:#2471a3;" onchange="onAiParamChange('likelihood',this.value)">
+                                            <option value="1">Unlikely</option>
+                                            <option value="2">Possible</option>
+                                            <option value="3">Likely</option>
+                                            <option value="4">Very Likely</option>
+                                            <option value="5">Certain</option>
+                                        </select>
                                     </div>
                                     <div class="ai-chip" style="min-width:80px;">
                                         <div class="ai-chip-label">Impact</div>
-                                        <div class="ai-chip-value" id="aiImpact" style="font-size:11px;color:#c0392b;">—</div>
+                                        <select id="aiImpactSel" class="ai-param-select" style="color:#c0392b;" onchange="onAiParamChange('impact',this.value)">
+                                            <option value="1">Negligible</option>
+                                            <option value="2">Light</option>
+                                            <option value="3">Medium</option>
+                                            <option value="4">Severe</option>
+                                            <option value="5">Catastrophic</option>
+                                        </select>
                                     </div>
                                     <div class="ai-chip" style="min-width:80px;">
                                         <div class="ai-chip-label">Proximity</div>
-                                        <div class="ai-chip-value" id="aiProximity" style="font-size:11px;color:#d68910;">—</div>
+                                        <select id="aiProximitySel" class="ai-param-select" style="color:#d68910;" onchange="onAiParamChange('proximity',this.value)">
+                                            <option value="0">Unknown</option>
+                                            <option value="1">Immediate</option>
+                                            <option value="2">Imminent</option>
+                                            <option value="3">Midterm</option>
+                                            <option value="4">Longterm</option>
+                                            <option value="5">SA Review</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -8716,23 +8817,89 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             const card = document.getElementById('aiSummaryCard');
             document.getElementById('aiSummaryText').textContent = result.summary;
             document.getElementById('aiClassification').textContent = result.classification;
-            document.getElementById('aiAlignment').textContent = result.strategicAlignment + '%';
 
-            // Show risk parameters chip if classified as Risk
+            // ── Cross-reference strategic objectives ──────────────────────────
+            const inputText  = window._lastAiInputText || result.summary || '';
+            const objMatches = matchStrategicObjectives(inputText);
+            const allObjs    = Object.values(_strategicObjectives).flat();
+
+            // Blend AI alignment score with objective match evidence
+            let displayAlignment = result.strategicAlignment || 0;
+            if (allObjs.length > 0) {
+                const matchScore = objMatches.length === 0 ? 0
+                    : Math.min(100, objMatches.length * 18 + 20);
+                displayAlignment = Math.min(100, Math.round((displayAlignment + matchScore) / 2));
+            }
+            document.getElementById('aiAlignment').textContent = displayAlignment + '%';
+
+            // ── Cross-reference existing register ─────────────────────────────
+            const regMatches = matchRegisterRisks(inputText);
+
+            // ── Populate context row ──────────────────────────────────────────
+            const ctxRow = document.getElementById('aiContextRow');
+            if (ctxRow) {
+                const objItem = document.getElementById('aiObjMatchItem');
+                const objText = document.getElementById('aiObjMatchText');
+                const objTags = document.getElementById('aiObjMatchTags');
+                const regItem = document.getElementById('aiRegMatchItem');
+                const regText = document.getElementById('aiRegMatchText');
+                const regTags = document.getElementById('aiRegMatchTags');
+
+                // Objectives panel
+                if (allObjs.length === 0) {
+                    objItem.className = 'ai-context-item no-matches';
+                    objText.textContent = 'Strategic objectives not loaded — sync your data file to enable cross-referencing.';
+                    objTags.innerHTML = '';
+                } else if (objMatches.length === 0) {
+                    objItem.className = 'ai-context-item no-matches';
+                    objText.textContent = `No direct matches across ${allObjs.length} strategic objective${allObjs.length !== 1 ? 's' : ''}.`;
+                    objTags.innerHTML = '';
+                } else {
+                    objItem.className = 'ai-context-item has-matches';
+                    objText.textContent = `Matches ${objMatches.length} strategic objective${objMatches.length !== 1 ? 's' : ''}:`;
+                    objTags.innerHTML = objMatches
+                        .map(o => `<span class="ai-match-tag" title="${o.title}">${o.code}</span>`)
+                        .join('');
+                }
+
+                // Register panel
+                if (!risks || risks.length === 0) {
+                    regItem.className = 'ai-context-item no-matches';
+                    regText.textContent = 'Register is empty — sync your data file to enable cross-referencing.';
+                    regTags.innerHTML = '';
+                } else if (regMatches.length === 0) {
+                    regItem.className = 'ai-context-item no-matches';
+                    regText.textContent = `No similar items found across ${risks.length} existing risk${risks.length !== 1 ? 's' : ''}.`;
+                    regTags.innerHTML = '';
+                } else {
+                    regItem.className = 'ai-context-item has-matches';
+                    regText.textContent = `${regMatches.length} possible match${regMatches.length !== 1 ? 'es' : ''} in existing register:`;
+                    regTags.innerHTML = regMatches.slice(0, 8)
+                        .map(r => {
+                            const shortId = String(r.id || '').replace(/-\d{8}$/, '');
+                            return `<span class="ai-match-tag risk-tag" title="${(r.description || '').slice(0, 80)}">${shortId}</span>`;
+                        }).join('');
+                }
+
+                ctxRow.style.display = '';
+            }
+
+            // ── Risk parameters (editable selects) ───────────────────────────
             const riskParams = document.getElementById('aiRiskParams');
             if (riskParams) {
                 if (result.classification === 'Risk') {
-                    const lLabels = ['','Unlikely','Possible','Likely','Very Likely','Certain'];
-                    const iLabels = ['','Negligible','Light','Medium','Severe','Catastrophic'];
-                    const pLabels = ['Unknown','Immediate','Imminent','Midterm','Longterm','SA Review'];
                     riskParams.style.display = '';
-                    document.getElementById('aiLikelihood').textContent  = lLabels[result.likelihood]  || result.likelihood;
-                    document.getElementById('aiImpact').textContent      = iLabels[result.impact]       || result.impact;
-                    document.getElementById('aiProximity').textContent   = pLabels[result.proximity]    || 'Midterm';
+                    const lSel = document.getElementById('aiLikelihoodSel');
+                    const iSel = document.getElementById('aiImpactSel');
+                    const pSel = document.getElementById('aiProximitySel');
+                    if (lSel) lSel.value = String(result.likelihood || 3);
+                    if (iSel) iSel.value = String(result.impact     || 3);
+                    if (pSel) pSel.value = String(result.proximity  != null ? result.proximity : 3);
                 } else {
                     riskParams.style.display = 'none';
                 }
             }
+
             card.classList.add('visible');
         }
 
@@ -8781,9 +8948,14 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 : 'SIP';
             const newId = prefix + '-' + serial + '-' + rand + '-' + dateSuffix;
 
-            const likelihood = parseInt(r.likelihood) || 3;
-            const impact     = parseInt(r.impact)     || 3;
-            const proximity  = parseInt(r.proximity) || 3;
+            // Read from the editable selects (user may have overridden the AI suggestion)
+            const lSel = document.getElementById('aiLikelihoodSel');
+            const iSel = document.getElementById('aiImpactSel');
+            const pSel = document.getElementById('aiProximitySel');
+            const selVisible = lSel && lSel.offsetParent !== null;
+            const likelihood = selVisible ? (parseInt(lSel.value) || parseInt(r.likelihood) || 3) : (parseInt(r.likelihood) || 3);
+            const impact     = selVisible ? (parseInt(iSel.value) || parseInt(r.impact)     || 3) : (parseInt(r.impact)     || 3);
+            const proximity  = selVisible ? (pSel.value !== '' ? parseInt(pSel.value) : parseInt(r.proximity) || 3) : (parseInt(r.proximity) || 3);
             const mitStatus  = '1 - None';
 
             const newRisk = {
@@ -8835,6 +9007,8 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             document.getElementById('aiSummaryCard').classList.remove('visible');
             const riskParams = document.getElementById('aiRiskParams');
             if (riskParams) riskParams.style.display = 'none';
+            const ctxRow = document.getElementById('aiContextRow');
+            if (ctxRow) ctxRow.style.display = 'none';
             document.getElementById('homeAiInputArea').style.display = '';
             const btn = document.getElementById('homeAiSubmit');
             btn.style.display = ''; // clear any inline override
@@ -8952,6 +9126,43 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             if (_aiBorderAnim) { cancelAnimationFrame(_aiBorderAnim); _aiBorderAnim = null; }
             const svg = document.getElementById('aiBorderCanvas');
             if (svg) svg.innerHTML = '';
+        }
+
+        // ── Strategic Objectives cross-reference ──────────────────────────────
+        function matchStrategicObjectives(inputText) {
+            const allObjs = Object.values(_strategicObjectives).flat();
+            if (allObjs.length === 0 || !inputText) return [];
+            const stop = new Set(['would','could','should','there','their','about','which','where',
+                                   'these','those','other','might','after','before','within','between']);
+            const inputWords = inputText.toLowerCase().split(/\W+/)
+                .filter(w => w.length >= 5 && !stop.has(w));
+            if (inputWords.length === 0) return [];
+            return allObjs.filter(obj => {
+                const haystack = [obj.title, obj.desc, ...obj.kpis].join(' ').toLowerCase();
+                return inputWords.some(w => haystack.includes(w));
+            });
+        }
+
+        // ── Existing Register cross-reference ─────────────────────────────────
+        function matchRegisterRisks(inputText) {
+            if (!risks || risks.length === 0 || !inputText) return [];
+            const stop = new Set(['would','could','should','there','their','about','which','where',
+                                   'these','those','other','might','after','before','within','between']);
+            const inputWords = inputText.toLowerCase().split(/\W+/)
+                .filter(w => w.length >= 5 && !stop.has(w));
+            if (inputWords.length === 0) return [];
+            return risks.filter(r => {
+                const haystack = [r.description, r.taraThreat, r.vulnerability,
+                                   r.category, r.mitigation].join(' ').toLowerCase();
+                const hits = inputWords.filter(w => haystack.includes(w));
+                return hits.length >= 2; // require at least 2 meaningful keyword overlaps
+            });
+        }
+
+        // ── Parameter override handler ─────────────────────────────────────────
+        function onAiParamChange(param, value) {
+            if (!_aiAnalysisResult) return;
+            _aiAnalysisResult[param] = parseInt(value);
         }
 
         // ==================== END HOME AI INPUT ====================
