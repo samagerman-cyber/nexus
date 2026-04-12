@@ -1129,6 +1129,25 @@
         .obj-toggle-btn.visible { display: flex; }
         .obj-toggle-btn.active { background: rgba(255,255,255,0.5); }
 
+        /* Bring-forward button — mirrors obj-toggle-btn style */
+        .bring-fwd-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.25);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .bring-fwd-btn:hover { background: rgba(255,255,255,0.45); }
+        .bring-fwd-btn svg  { pointer-events: none; }
+        .bring-fwd-btn.visible { display: flex; }
+
         .objectives-panel {
             display: none;
             background: #f8fafb;
@@ -1497,8 +1516,6 @@
         }
         @keyframes noCrystalSequence {
             0%   { opacity: 1; }
-            15%  { opacity: 0.12; }
-            35%  { opacity: 1; }
             60%  { opacity: 1; }
             100% { opacity: 0; }
         }
@@ -1624,7 +1641,10 @@
 
         .rbtn-toggle    { background: white; border: 1.5px solid #bdc3c7; color:#2c3e50; }
         .rbtn-toggle:hover { background:#f0f2f5; }
-        .rbtn-toggle.on { background: linear-gradient(135deg,#e67e22,#d35400); color:white; border-color:transparent; }
+        .rbtn-toggle.on     { background: white; border: 1.5px solid #e67e22; color: #2c3e50; }
+        .rbtn-toggle.on .toggle-status     { background: #e67e22 !important; color: white !important; }
+        .rbtn-toggle.active { background: white; border: 1.5px solid #e67e22; color: #2c3e50; }
+        .rbtn-toggle.active .toggle-status { background: #e67e22 !important; color: white !important; }
 
         .rbtn-primary:hover,
         .rbtn-success:hover,
@@ -6294,6 +6314,9 @@
                             <span>CUSTOMER</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:0;">
+                            <button class="bring-fwd-btn" id="customer-bf-btn" onclick="bringForwardSection('customer', event)" title="Bring forward previous update">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="14" x2="14" y2="14"/><polyline points="11 11 14 14 11 17"/></svg>
+                            </button>
                             <button class="obj-toggle-btn" id="customer-obj-btn" onclick="toggleObjectivesPanel('customer', event)" title="View Strategic Objectives">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
@@ -6353,6 +6376,9 @@
                             <span>INVESTOR</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:0;">
+                            <button class="bring-fwd-btn" id="investor-bf-btn" onclick="bringForwardSection('investor', event)" title="Bring forward previous update">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="14" x2="14" y2="14"/><polyline points="11 11 14 14 11 17"/></svg>
+                            </button>
                             <button class="obj-toggle-btn" id="investor-obj-btn" onclick="toggleObjectivesPanel('investor', event)" title="View Strategic Objectives">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
@@ -6412,6 +6438,9 @@
                             <span>FINANCE</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:0;">
+                            <button class="bring-fwd-btn" id="finance-bf-btn" onclick="bringForwardSection('finance', event)" title="Bring forward previous update">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="14" x2="14" y2="14"/><polyline points="11 11 14 14 11 17"/></svg>
+                            </button>
                             <button class="obj-toggle-btn" id="finance-obj-btn" onclick="toggleObjectivesPanel('finance', event)" title="View Strategic Objectives">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
@@ -6471,6 +6500,9 @@
                             <span>TECHNOLOGY</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:0;">
+                            <button class="bring-fwd-btn" id="technology-bf-btn" onclick="bringForwardSection('technology', event)" title="Bring forward previous update">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="14" x2="14" y2="14"/><polyline points="11 11 14 14 11 17"/></svg>
+                            </button>
                             <button class="obj-toggle-btn" id="technology-obj-btn" onclick="toggleObjectivesPanel('technology', event)" title="View Strategic Objectives">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
@@ -6530,6 +6562,9 @@
                             <span>OPERATIONS</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:0;">
+                            <button class="bring-fwd-btn" id="operations-bf-btn" onclick="bringForwardSection('operations', event)" title="Bring forward previous update">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="14" x2="14" y2="14"/><polyline points="11 11 14 14 11 17"/></svg>
+                            </button>
                             <button class="obj-toggle-btn" id="operations-obj-btn" onclick="toggleObjectivesPanel('operations', event)" title="View Strategic Objectives">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
@@ -7202,6 +7237,7 @@
          * This keeps the expand/collapse state consistent as the user moves through weeks.
          */
         function _applyBPRExpandState() {
+            const onHistorical = !isCurrentWeekEditable();
             _BPR_SECTIONS.forEach(function(sk) {
                 var content = document.getElementById(sk + '-content');
                 if (!content) return;
@@ -7209,10 +7245,18 @@
                 var hasRows = tbody && tbody.children.length > 0;
                 var isCollapsed = content.classList.contains('collapsed');
 
-                if (_bprAllExpanded && isCollapsed && hasRows) {
-                    toggleBPRSection(sk);          // expand sections that have content
-                } else if (!_bprAllExpanded && !isCollapsed) {
-                    toggleBPRSection(sk);          // collapse all sections
+                if (onHistorical) {
+                    // Historical weeks: always expand sections that have data,
+                    // collapse sections that are empty — regardless of _bprAllExpanded.
+                    // This ensures sections show correctly whether arriving from the
+                    // sidebar or from the Dashboard BPR Summary view.
+                    if (hasRows && isCollapsed)   toggleBPRSection(sk);
+                    if (!hasRows && !isCollapsed) toggleBPRSection(sk);
+                } else {
+                    // Current week: expand sections with data, collapse empty ones.
+                    if (hasRows && isCollapsed)   toggleBPRSection(sk);
+                    if (!hasRows && !isCollapsed) toggleBPRSection(sk);
+                    _bprAllExpanded = true;
                 }
             });
         }
@@ -7324,14 +7368,19 @@
             }
             loadWeekData();
             updateWeekDisplay();
-            // Collapse all sections and set toggle to "Expand All"
+            // Expand sections that have data, collapse empty ones
             _BPR_SECTIONS.forEach(function(sk) {
                 var content = document.getElementById(sk + '-content');
-                if (content && !content.classList.contains('collapsed')) toggleBPRSection(sk);
+                if (!content) return;
+                var tbody = document.getElementById(sk + '-tbody');
+                var hasRows = tbody && tbody.children.length > 0;
+                var isCollapsed = content.classList.contains('collapsed');
+                if (hasRows && isCollapsed)   toggleBPRSection(sk);
+                if (!hasRows && !isCollapsed) toggleBPRSection(sk);
             });
-            _bprAllExpanded = false;
+            _bprAllExpanded = true;
             var btn = document.getElementById('bprExpandCollapseBtn');
-            if (btn && btn.style.display !== 'none') btn.innerHTML = '⊞ Expand All';
+            if (btn && btn.style.display !== 'none') btn.innerHTML = '⊟ Collapse All';
         }
 
         function _syncBPRExpandBtn() {
@@ -7544,6 +7593,9 @@
 
             // Load traffic light states for this week
             loadSectionTrafficLights();
+
+            // Update bring-forward button visibility for all sections
+            _updateAllBFBtns();
         }
 
         /**
@@ -8496,6 +8548,7 @@
             const weekData = businessPlanData.weeks[currentWeek];
             const filledRows = weekData[section].filter(_bprRowIsFilled).length;
             document.getElementById(`${section}-count`).textContent = filledRows;
+            updateBFBtnVisibility(section);
         }
 
         var _bprAllExpanded = false;
@@ -8586,6 +8639,81 @@
                 toggle.classList.add('collapsed');
                 if (objBtn) { objBtn.classList.remove('visible'); objBtn.classList.remove('active'); }
                 if (objPanel) objPanel.classList.remove('open');
+            }
+            updateBFBtnVisibility(section);
+        }
+
+        /**
+         * Show/hide the bring-forward button for one section.
+         * Visible only when: current week + section expanded + no filled rows.
+         */
+        function updateBFBtnVisibility(section) {
+            const btn = document.getElementById(section + '-bf-btn');
+            if (!btn) return;
+            const content = document.getElementById(section + '-content');
+            const isExpanded = content && !content.classList.contains('collapsed');
+            const weekData = businessPlanData.weeks[currentWeek];
+            const hasFilledRows = weekData && weekData[section] &&
+                                  weekData[section].filter(_bprRowIsFilled).length > 0;
+            if (isCurrentWeekEditable() && isExpanded && !hasFilledRows) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+
+        /** Call updateBFBtnVisibility for all sections at once. */
+        function _updateAllBFBtns() {
+            _BPR_SECTIONS.forEach(updateBFBtnVisibility);
+        }
+
+        /**
+         * Copy filled rows from the most recent previous week that has data
+         * for this section into the current week, stamping today's date.
+         */
+        function bringForwardSection(section, event) {
+            if (event) event.stopPropagation();
+            if (!isCurrentWeekEditable()) return;
+
+            // Find the most recent prior week with filled rows for this section
+            const allWeeks = Object.keys(businessPlanData.weeks).sort();
+            const currentIdx = allWeeks.indexOf(currentWeek);
+            let sourceWeek = null;
+            for (let i = currentIdx - 1; i >= 0; i--) {
+                const wd = businessPlanData.weeks[allWeeks[i]];
+                if (wd && wd[section] && wd[section].filter(_bprRowIsFilled).length > 0) {
+                    sourceWeek = allWeeks[i];
+                    break;
+                }
+            }
+
+            if (!sourceWeek) {
+                alert('No previous data found for this section to bring forward.');
+                return;
+            }
+
+            const today = new Date().toISOString();
+            const sourceRows = businessPlanData.weeks[sourceWeek][section]
+                .filter(_bprRowIsFilled)
+                .map(function(row) {
+                    return Object.assign({}, row, {
+                        dateLogged:    today,
+                        lastUpdated:   today,
+                        weekCreated:   currentWeek,
+                        imported:      false,
+                        updateHistory: []
+                    });
+                });
+
+            // Replace any blank starters with the brought-forward rows
+            businessPlanData.weeks[currentWeek][section] = sourceRows;
+            localStorage.setItem('businessPlanData', JSON.stringify(businessPlanData));
+
+            // Re-render, then ensure this section stays expanded
+            loadWeekData();
+            const content = document.getElementById(section + '-content');
+            if (content && content.classList.contains('collapsed')) {
+                toggleBPRSection(section);
             }
         }
 
