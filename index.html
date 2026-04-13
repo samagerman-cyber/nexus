@@ -3980,6 +3980,17 @@
             background: #dbeeff !important;
         }
 
+        /* Scan Register highlight */
+        .scan-highlight {
+            border-left: 3px solid #e74c3c !important;
+        }
+        .scan-highlight td {
+            background: rgba(231, 76, 60, 0.08) !important;
+        }
+        .scan-highlight:hover td {
+            background: rgba(231, 76, 60, 0.15) !important;
+        }
+
         /* Traffic light style RAG indicators */
         .risk-badge {
             width: 14px;
@@ -5977,6 +5988,7 @@
                     <button class="rbtn rbtn-success" onclick="toggleAddRiskPanel()">➕ Add New Risk</button>
                     <button class="rbtn rbtn-danger" onclick="clearAllRisks()">🗑️ Clear All Risks</button>
                     <button class="rbtn rbtn-toggle" id="saReviewBtn" onclick="filterSAReview()">📋 SA Review</button>
+                    <button class="rbtn rbtn-toggle" id="scanRegisterBtn" onclick="scanRegister()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="1" width="11" height="14" rx="1.5" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.4"/><line x1="3.5" y1="5" x2="9.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="7.5" x2="9.5" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="10" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="14" cy="14" r="4.2" fill="white" stroke="currentColor" stroke-width="1.5"/><line x1="17.2" y1="17.2" x2="19.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Scan Register</button>
                     <button class="rbtn rbtn-neutral" onclick="exportToExcel()">📤 Export to Excel</button>
                     <div class="ribbon-sep"></div>
                     <div class="ribbon-search-wrapper">
@@ -7695,6 +7707,88 @@
         }
 
         // ==================== EXCEL EXPORT FUNCTIONS ====================
+
+        // ── Scan Register ─────────────────────────────────────────────────────────
+        window._scanActive     = false;
+        window._scannedRiskIds = new Set();
+        var _SCAN_BTN_ICON = '<svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="1" width="11" height="14" rx="1.5" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.4"/><line x1="3.5" y1="5" x2="9.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="7.5" x2="9.5" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="10" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="14" cy="14" r="4.2" fill="white" stroke="currentColor" stroke-width="1.5"/><line x1="17.2" y1="17.2" x2="19.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+        function scanRegister() {
+            const btn = document.getElementById('scanRegisterBtn');
+
+            // ── Clear mode ────────────────────────────────────────────────────────
+            if (window._scanActive) {
+                window._scanActive = false;
+                window._scannedRiskIds = new Set();
+                btn.innerHTML = _SCAN_BTN_ICON + 'Scan Register';
+                btn.classList.remove('on');
+                // Hide sync bar cleanly
+                const barEl = document.getElementById('registerSyncBar');
+                const msgEl = document.getElementById('registerSyncMsg');
+                if (barEl)  { barEl.classList.remove('active'); barEl.style.opacity = ''; }
+                if (msgEl)  { msgEl.style.display = 'none'; msgEl.textContent = ''; }
+                renderPage();
+                return;
+            }
+
+            // ── Scan mode — show animation for 3 s then highlight results ─────────
+            const barEl   = document.getElementById('registerSyncBar');
+            const svgId   = 'registerSyncSvg';
+            const svgEl   = document.getElementById(svgId);
+            const msgEl   = document.getElementById('registerSyncMsg');
+            const labelEl = document.getElementById('registerSyncLabel');
+
+            // Swap label to "Scanning …"
+            const _origLabel = labelEl ? labelEl.innerHTML : '';
+            if (barEl)   { barEl.style.opacity = ''; barEl.style.transition = ''; barEl.classList.add('active'); }
+            if (labelEl) { labelEl.innerHTML = '<span class="sync-bar-badge">' + _SCAN_BTN_ICON + '</span>Scanning…'; labelEl.style.display = ''; }
+            if (svgEl)   { svgEl.style.display = ''; svgEl.innerHTML = ''; }
+            if (msgEl)   { msgEl.style.display = 'none'; msgEl.textContent = ''; }
+            startSyncAnimation(svgId);
+            btn.disabled = true;
+
+            setTimeout(function() {
+                // Stop animation
+                if (_syncAnimHandle) { cancelAnimationFrame(_syncAnimHandle); _syncAnimHandle = null; }
+                if (svgEl)   { svgEl.innerHTML = ''; svgEl.style.display = 'none'; }
+                if (labelEl) { labelEl.style.display = 'none'; labelEl.innerHTML = _origLabel; }
+
+                // Find matching risks — flag if ANY criterion is met:
+                // • RAG = red
+                // • Proximity = SA Review (5) or Imminent (2)
+                // • Impact = 5 (Very High)
+                // • Mitigation Status = None
+                const matched = risks.filter(function(r) {
+                    return r.rag === 'red' ||
+                           r.proximity === 5 ||
+                           r.proximity === 2 ||
+                           r.impact === 5 ||
+                           (r.mitigationStatus || '').includes('None');
+                });
+
+                window._scannedRiskIds = new Set(matched.map(function(r) { return r.id; }));
+                window._scanActive     = true;
+
+                btn.disabled = false;
+                btn.innerHTML = '✕ Clear Scan';
+                btn.classList.add('on');
+
+                // Show result in sync bar message
+                if (msgEl) {
+                    if (matched.length > 0) {
+                        msgEl.textContent = '⚠ ' + matched.length + ' vettable risk' + (matched.length > 1 ? 's' : '') + ' identified';
+                        msgEl.className   = 'sync-bar-msg error';
+                    } else {
+                        msgEl.textContent = '✓ No vettable risks identified';
+                        msgEl.className   = 'sync-bar-msg info';
+                    }
+                    msgEl.style.display = 'block';
+                }
+
+                renderPage();
+            }, 3000);
+        }
+        // ── End Scan Register ─────────────────────────────────────────────────────
 
         function exportToExcel() {
             // Create new workbook
@@ -10839,6 +10933,10 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 }
                 const { shortId, dateStr } = extractRiskDisplay(risk.id);
 
+                row.setAttribute('data-risk-id', risk.id);
+                if (window._scanActive && window._scannedRiskIds && window._scannedRiskIds.has(risk.id)) {
+                    row.classList.add('scan-highlight');
+                }
                 row.innerHTML = `
                     <td style="cursor:pointer;" ondblclick="openEditRiskModal('${risk.id.replace(/'/g,'&apos;')}')" title="Double-click to edit">${shortId}</td>
                     <td>${dateStr}</td>
