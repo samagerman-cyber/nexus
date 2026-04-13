@@ -14,19 +14,25 @@
             box-sizing: border-box;
         }
 
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
 
         /* ===== APP SHELL: sidebar + main ===== */
         body {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
+            height: 100%;
+            overflow: hidden;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .app-shell {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* Top bar (always visible) */
@@ -101,6 +107,8 @@
         .app-body {
             display: flex;
             flex: 1;
+            min-height: 0; /* allow flex children to shrink and scroll */
+            overflow: hidden;
         }
 
         /* Sidebar */
@@ -174,7 +182,8 @@
         /* Main content area */
         .app-main {
             flex: 1;
-            overflow-y: auto;
+            min-height: 0;
+            overflow: hidden; /* only tab-body scrolls, not app-main itself */
             display: flex;
             flex-direction: column;
         }
@@ -247,15 +256,26 @@
         }
 
         /* Existing container shown inside app-main */
+        /* #appContainer and .container/.content must propagate height to tab-content */
+        #appContainer {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
         .container {
             max-width: none !important;
             width: 100%;
             background: white;
             border-radius: 0 !important;
             box-shadow: none !important;
-            overflow: visible;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
+            flex: 1;
+            min-height: 0;
         }
 
         /* Hide original header (replaced by topbar) */
@@ -265,9 +285,6 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
         }
 
         .container {
@@ -337,8 +354,9 @@
 
         .content {
             padding: 0;
-            overflow-x: auto;
+            overflow: hidden;
             flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
         }
@@ -351,6 +369,9 @@
         .tab-content.active {
             display: flex;
             flex-direction: column;
+            flex: 1;
+            min-height: 0; /* allow shrinking so overflow activates on children */
+            overflow: hidden;
             animation: fadeIn 0.3s ease;
         }
 
@@ -363,11 +384,13 @@
             text-transform: uppercase;
         }
 
-        /* Inner body of each tab — provides the padding that was on .content */
+        /* Inner body of each tab — scrolls independently below the ribbon */
         .tab-body {
             padding: 24px 30px 30px;
             flex: 1;
+            min-height: 0;
             min-width: 0;
+            overflow-y: auto;
         }
 
         /* Dashboard uses a flex row wrapper inside tab-body */
@@ -1415,6 +1438,8 @@
             min-height: 52px;
             flex-shrink: 0;
         }
+
+        /* Ribbon stays visible because only .tab-body scrolls, not the whole tab */
 
         .ribbon-label {
             font-size: 12px;
@@ -5638,7 +5663,7 @@
                 </div>
 
                 <!-- EXISTING APP (hidden until a tab is selected) -->
-                <div id="appContainer" style="display:none;">
+                <div id="appContainer" style="display:none;flex:1;min-height:0;">
                     <div class="container">
                         <div class="header">
                             <h1>Active Infrastructure Governance OS</h1>
@@ -5667,7 +5692,7 @@
                             <div class="view-dropdown-item" onclick="switchDashView('quadrant')">⊞ Quad Chart</div>
                         </div>
                     </div>
-                    <button class="rbtn rbtn-toggle" id="commentaryToggleBtn" onclick="toggleCommentary()">💬 Show Commentary</button>
+                    <button class="rbtn rbtn-toggle" id="commentaryToggleBtn" onclick="toggleCommentary()">💬 Auto Comment <span class="toggle-status" id="commentaryStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span></button>
                     <div class="ribbon-sep"></div>
                     <button class="rbtn rbtn-neutral" onclick="exportDashboardPDF()" title="Export dashboard as PDF">🖨 Export PDF</button>
                 </div>
@@ -5961,7 +5986,6 @@
                 </div><!-- /.dashboard-flex-row -->
                 </div><!-- /.tab-body -->
             </div><!-- /#dashboard -->
-            </div><!-- /.content close -->
 
             <!-- Risk Register Tab -->
             <div id="register" class="tab-content">
@@ -6629,7 +6653,7 @@
                     <button class="rbtn rbtn-purple" id="catFilterToggle" onclick="toggleCatPanel()">Show Categories</button>
                     <button class="rbtn rbtn-toggle" id="legendToggle" onclick="toggleQuadLegend()">Hide Legend</button>
                     <button class="rbtn rbtn-toggle" id="mitigationToggle">Show Post-Mitigation</button>
-                    <button class="rbtn rbtn-toggle" id="quadCommentaryToggleBtn" onclick="toggleQuadCommentary()">💬 Show Commentary</button>
+                    <button class="rbtn rbtn-toggle" id="quadCommentaryToggleBtn" onclick="toggleQuadCommentary()">💬 Auto Comment <span class="toggle-status" id="quadCommentaryStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span></button>
                     <div class="ribbon-flex-space"></div>
                     <div class="quad-ribbon-title-wrap">
                         <span class="quad-ribbon-heading">Likelihood vs Impact</span>
@@ -10043,8 +10067,9 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
 
         function toggleCommentary() {
             _commentaryVisible = !_commentaryVisible;
-            const col     = document.getElementById('commentaryCol');
-            const btn     = document.getElementById('commentaryToggleBtn');
+            const col        = document.getElementById('commentaryCol');
+            const btn        = document.getElementById('commentaryToggleBtn');
+            const statusSpan = document.getElementById('commentaryStatus');
 
             // Remove any existing injected style
             const existing = document.getElementById('commentaryLayoutStyle');
@@ -10060,14 +10085,13 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                     #commentaryCol { display:flex !important; flex-direction:column !important; width:35% !important; max-width:35% !important; min-width:240px !important; padding-left:20px !important; box-sizing:border-box !important; flex-shrink:0 !important; }
                 `;
                 document.head.appendChild(style);
-
                 btn.classList.add('on');
-                btn.textContent = '💬 Hide Commentary';
+                if (statusSpan) statusSpan.textContent = 'ON';
                 refreshCommentary();
             } else {
                 col.style.display = 'none';
                 btn.classList.remove('on');
-                btn.textContent = '💬 Show Commentary';
+                if (statusSpan) statusSpan.textContent = 'OFF';
             }
         }
 
@@ -10075,12 +10099,13 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
 
         function toggleQuadCommentary() {
             _quadCommentaryVisible = !_quadCommentaryVisible;
-            const col       = document.getElementById('quadCommentaryCol');
-            const btn       = document.getElementById('quadCommentaryToggleBtn');
-            const legend    = document.getElementById('quadLegend');
-            const catPanel  = document.getElementById('quadCatPanel');
-            const legendBtn = document.getElementById('legendToggle');
-            const catBtn    = document.getElementById('catFilterToggle');
+            const col        = document.getElementById('quadCommentaryCol');
+            const btn        = document.getElementById('quadCommentaryToggleBtn');
+            const statusSpan = document.getElementById('quadCommentaryStatus');
+            const legend     = document.getElementById('quadLegend');
+            const catPanel   = document.getElementById('quadCatPanel');
+            const legendBtn  = document.getElementById('legendToggle');
+            const catBtn     = document.getElementById('catFilterToggle');
 
             const existing = document.getElementById('quadCommentaryLayoutStyle');
             if (existing) existing.remove();
@@ -10097,7 +10122,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                     '#miniQuadGrid { display:none !important; }';
                 document.head.appendChild(style);
                 btn.classList.add('on');
-                btn.textContent = '💬 Hide Commentary';
+                if (statusSpan) statusSpan.textContent = 'ON';
                 // Visually mute the legend and category buttons while commentary is open
                 if (legendBtn) { legendBtn.disabled = true; legendBtn.style.opacity = '0.4'; }
                 if (catBtn)    { catBtn.disabled = true;    catBtn.style.opacity = '0.4'; }
@@ -10105,7 +10130,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             } else {
                 col.style.display = 'none';
                 btn.classList.remove('on');
-                btn.textContent = '💬 Show Commentary';
+                if (statusSpan) statusSpan.textContent = 'OFF';
                 // Restore legend and category buttons
                 if (legendBtn) { legendBtn.disabled = false; legendBtn.style.opacity = ''; }
                 if (catBtn)    { catBtn.disabled = false;    catBtn.style.opacity = ''; }
@@ -12431,7 +12456,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             }
             // Hide home page, show app container
             document.getElementById('homePage').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'flex';
             // Activate correct tab
             showTab(tabName);
             // Update sidebar active state
