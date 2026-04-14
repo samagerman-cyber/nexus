@@ -4284,6 +4284,7 @@
         table.people-table th:nth-child(n) {
             width: auto;
             white-space: normal;
+            text-align: left;
         }
         table.people-table { table-layout: auto; }
 
@@ -5206,6 +5207,24 @@
             overflow: hidden;
             box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
+
+        /* Full-bleed photo layer — sits directly above the base gradient */
+        .ov-expand-bg-photo {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        /* Dark scrim so text and circles remain crisp over the photo */
+        .ov-expand-bg-photo::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(4, 14, 28, 0.68);
+        }
         .ov-expand-back {
             position: absolute;
             top: 20px;
@@ -5238,6 +5257,8 @@
             gap: 50px;
             opacity: 0;
             transition: opacity 0.35s ease;
+            position: relative;
+            z-index: 1;
         }
         .ov-expand-left {
             flex: 0 0 48%;
@@ -5783,6 +5804,7 @@
 
     <!-- ═══ Card Expansion Overlay ═══ -->
     <div class="ov-expand-overlay" id="ovExpandOverlay">
+        <div class="ov-expand-bg-photo" id="ovExpandBgPhoto"></div>
         <button class="ov-expand-back" onclick="collapseExpandedCard()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
             Back
@@ -8622,7 +8644,9 @@
             html += '<th style="width:28px;min-width:28px;max-width:28px;text-align:center;">#</th>';
             cols.forEach(function(col, ci) {
                 var ws = colWidthStyle[ci];
-                html += '<th' + (ws ? ' style="' + ws + '"' : '') + '>' + escapeHtml(col) + '</th>';
+                var align = colIsDate[ci] ? 'text-align:center;' : 'text-align:left;';
+                var styleVal = align + (ws || '');
+                html += '<th style="' + styleVal + '">' + escapeHtml(col) + '</th>';
             });
             html += '</tr></thead>';
 
@@ -8638,12 +8662,13 @@
                 cols.forEach(function(col, ci) {
                     var raw     = row[col] !== undefined && row[col] !== null ? row[col] : '';
                     var display = colIsDate[ci] ? _formatPeopleDate(raw) : escapeHtml(String(raw));
-                    var ws      = colWidthStyle[ci] ? ' style="' + colWidthStyle[ci] + '"' : '';
+                    var align   = colIsDate[ci] ? 'text-align:center;' : 'text-align:left;';
+                    var styleVal = align + (colWidthStyle[ci] || '');
                     var isClickable = (ci === surnameIdx || ci === firstNameIdx);
                     if (isClickable) {
-                        html += '<td ondblclick="openPersonModal(' + globalIdx + ')" title="Double-click to view profile" style="' + (colWidthStyle[ci] || '') + 'cursor:pointer;text-decoration:underline dotted #8fa8c8;">' + display + '</td>';
+                        html += '<td ondblclick="openPersonModal(' + globalIdx + ')" title="Double-click to view profile" style="' + styleVal + 'cursor:pointer;text-decoration:underline dotted #8fa8c8;">' + display + '</td>';
                     } else {
-                        html += '<td' + ws + '>' + display + '</td>';
+                        html += '<td style="' + styleVal + '">' + display + '</td>';
                     }
                 });
                 html += '</tr>';
@@ -13543,6 +13568,12 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                             if (statusDropdown) statusDropdown.value = rowData.status;
                         }
 
+                        // Overwrite date cells with stored values (addBPRRow stamps today by default)
+                        const dlCell = row.querySelector('.bpr-date-dl');
+                        const luCell = row.querySelector('.bpr-date-lu');
+                        if (dlCell) dlCell.textContent = formatBPRDate(rowData.dateLogged);
+                        if (luCell) luCell.textContent = formatBPRDate(rowData.lastUpdated);
+
                         // Make all inputs read-only in show-all mode
                         row.querySelectorAll('textarea, select, button').forEach(el => el.disabled = true);
                         totalRows++;
@@ -14190,6 +14221,27 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 var inner   = document.getElementById('ovExpandInner');
                 if (!overlay || !inner) { console.error('NEXUS expand: overlay elements missing'); return; }
 
+                // Set background photo for panels that have one
+                var _panelBgImages = {
+                    'business':  'Busines Review Action Planning.jpg',
+                    'register':  'Risk Register Image.jpg',
+                    'people':    'People & Accountability.jpg',
+                    'dashboard': 'Dashboard Summaries.jpg'
+                };
+                var bgDiv = document.getElementById('ovExpandBgPhoto');
+                if (bgDiv) {
+                    var imgFile = _panelBgImages[id];
+                    if (imgFile) {
+                        bgDiv.style.backgroundImage = 'url("' + imgFile + '")';
+                        bgDiv.style.opacity = '0';
+                        // Fade the photo in after the panel animates open
+                        setTimeout(function() { bgDiv.style.opacity = '1'; }, 420);
+                    } else {
+                        bgDiv.style.backgroundImage = '';
+                        bgDiv.style.opacity = '0';
+                    }
+                }
+
                 var rect = clickedCard.getBoundingClientRect();
                 _expandedCardRect = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
                 _expandedCardId = id;
@@ -14275,8 +14327,10 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             const inner = document.getElementById('ovExpandInner');
             const rect = _expandedCardRect;
 
-            // Fade out inner content
+            // Fade out inner content and background photo together
             inner.style.opacity = '0';
+            var bgDiv = document.getElementById('ovExpandBgPhoto');
+            if (bgDiv) bgDiv.style.opacity = '0';
 
             setTimeout(() => {
                 overlay.style.transition = 'top 0.38s cubic-bezier(0.4,0,0.2,1), left 0.38s cubic-bezier(0.4,0,0.2,1), width 0.38s cubic-bezier(0.4,0,0.2,1), height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease 0.2s, border-radius 0.38s ease';
