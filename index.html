@@ -4226,6 +4226,14 @@
         /* Col 15: Strategic Priority */
         .risk-table td:nth-child(15), .risk-table th:nth-child(15) { width:7%; white-space:nowrap; }
 
+        /* People table: reset the Risk Register nth-child widths so our inline styles control layout */
+        table.people-table td:nth-child(n),
+        table.people-table th:nth-child(n) {
+            width: auto;
+            white-space: normal;
+        }
+        table.people-table { table-layout: auto; }
+
         .risk-table tbody tr:nth-child(odd):not(.filler-row) {
             background: #f0f6fb;
         }
@@ -8504,17 +8512,24 @@
             var surnameIdx   = cols.findIndex(function(c) { return /^(surname|last\s*name|family\s*name|lname)$/i.test(c.trim()); });
             var firstNameIdx = cols.findIndex(function(c) { return /^(first\s*name|firstname|given\s*name|fname)$/i.test(c.trim()); });
 
+            // Store role & organisation column keys globally so the modal can read them reliably
+            window._peopleRoleColKey = cols.find(function(c) { return /^role$/i.test(c.trim()); }) || null;
+            window._peopleOrgColKey  = cols.find(function(c) { return /^(organisation|organization|org|company|entity)$/i.test(c.trim()); }) || null;
+
             // ── Column width classification ───────────────────────────────────────
             // Area A: # column → just wide enough for 3 digits
-            // Area B: blank/empty columns (all values empty) → reduce to 40px
-            // Area C: Role column → 110px (wider for longer role names)
+            // Area B: blank/empty columns → collapse to near-zero
+            // Area C: named columns → controlled widths for balance
             var colWidthStyle = cols.map(function(col) {
                 var isBlank = /^__EMPTY/i.test(col) || allData.every(function(r) {
                     var v = r[col];
                     return v === null || v === undefined || String(v).trim() === '';
                 });
-                if (isBlank) return 'width:40px;min-width:40px;max-width:40px;overflow:hidden;';
-                if (/^role$/i.test(col.trim())) return 'width:110px;min-width:110px;';
+                if (isBlank) return 'width:8px;min-width:8px;max-width:8px;padding:0;overflow:hidden;';
+                if (/^role$/i.test(col.trim())) return 'width:80px;min-width:60px;max-width:80px;';
+                if (/^(first\s*name|firstname|given\s*name|fname)$/i.test(col.trim())) return 'width:100px;min-width:80px;max-width:120px;';
+                if (/^(surname|last\s*name|family\s*name|lname)$/i.test(col.trim())) return 'width:110px;min-width:80px;max-width:130px;';
+                if (/^(organisation|organization|org|company|entity)$/i.test(col.trim())) return 'width:130px;min-width:100px;max-width:150px;';
                 return '';
             });
 
@@ -8526,7 +8541,7 @@
 
             // Build table — Risk Register styling via .risk-table CSS class
             var html = '<div style="overflow-x:auto;">';
-            html += '<table class="risk-table">';
+            html += '<table class="risk-table people-table">';
 
             // Header — dark blue, matches Risk Register
             html += '<thead><tr>';
@@ -8680,15 +8695,17 @@
             var fullName  = (firstName + ' ' + surname).trim() || '—';
             var points    = getField(row, ['nexus points','nxpoints','nx points','points','score']) || 0;
 
-            // Role from column F (index 5, 0-based) — direct column position
-            var rowValues = Object.values(row);
-            var roleFromColF = rowValues[5] !== undefined && rowValues[5] !== null ? String(rowValues[5]) : '';
-            // Fall back to name-based lookup if col F is empty
-            if (!roleFromColF) roleFromColF = getField(row, ['role','job title','title','position','department']) || '';
+            // Role — use the exact column key captured when the table was rendered
+            var roleRaw = window._peopleRoleColKey ? row[window._peopleRoleColKey] : undefined;
+            var roleFromColF = (roleRaw !== undefined && roleRaw !== null && String(roleRaw).trim() !== '')
+                ? String(roleRaw)
+                : (getField(row, ['role','job title','position','department']) || '');
 
-            // Organisation from column C (index 2, 0-based)
-            var organisation = rowValues[2] !== undefined && rowValues[2] !== null ? String(rowValues[2]) : '';
-            if (!organisation) organisation = getField(row, ['organisation','organization','org','company','entity']) || '';
+            // Organisation — use the exact column key captured when the table was rendered
+            var orgRaw = window._peopleOrgColKey ? row[window._peopleOrgColKey] : undefined;
+            var organisation = (orgRaw !== undefined && orgRaw !== null && String(orgRaw).trim() !== '')
+                ? String(orgRaw)
+                : (getField(row, ['organisation','organization','org','company','entity']) || '');
 
             // ── Populate modal fields ─────────────────────────────────────────────
             document.getElementById('pmName').textContent   = fullName;
