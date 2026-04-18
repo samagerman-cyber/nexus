@@ -2778,36 +2778,43 @@
         /* Tab bar */
         .risk-modal-tabs {
             display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            background: #2c3e50;
+            border-bottom: 3px solid #700d19;
             flex-shrink: 0;
         }
 
         .risk-modal-tab {
             flex: 1;
-            padding: 11px 16px;
-            background: none;
+            padding: 12px 16px;
+            background: transparent;
             border: none;
-            font-size: 13px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
             font-weight: 600;
-            color: #7f8c8d;
+            color: rgba(255,255,255,0.5);
             cursor: pointer;
             position: relative;
-            transition: color 0.2s;
+            transition: color 0.2s, background 0.2s;
+            letter-spacing: 0.2px;
+        }
+        .risk-modal-tab:last-child { border-right: none; }
+        .risk-modal-tab:hover:not(.active) {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.75);
         }
 
         .risk-modal-tab.active {
-            color: #700d19;
-            background: white;
+            color: #fff;
+            background: rgba(112,13,25,0.6);
         }
 
         .risk-modal-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -2px;
+            bottom: -3px;
             left: 0; right: 0;
-            height: 2px;
-            background: #700d19;
+            height: 3px;
+            background: #e74c3c;
         }
 
         .risk-modal-tab .tab-num {
@@ -2816,14 +2823,17 @@
             justify-content: center;
             width: 18px; height: 18px;
             border-radius: 50%;
-            background: #e9ecef;
-            color: #555;
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.6);
             font-size: 10px;
             font-weight: 700;
             margin-right: 6px;
             transition: background 0.2s, color 0.2s;
         }
-        .risk-modal-tab.active .tab-num { background: #700d19; color: white; }
+        .risk-modal-tab.active .tab-num {
+            background: #e74c3c;
+            color: white;
+        }
 
         /* Tab panels */
         .risk-modal-body {
@@ -5610,6 +5620,9 @@
                 <button class="risk-modal-tab" id="editModalTab2" onclick="switchEditModalTab(2)">
                     <span class="tab-num">2</span> Mitigation &amp; Ownership
                 </button>
+                <button class="risk-modal-tab" id="editModalTab3" onclick="switchEditModalTab(3)">
+                    <span class="tab-num">3</span> Action Planning
+                </button>
             </div>
 
             <div class="risk-modal-body">
@@ -5736,6 +5749,34 @@
                     </div>
                     <div class="modal-msg" id="editModalMsg"></div>
                 </div>
+
+                <!-- Tab 3: Action Planning -->
+                <div class="risk-tab-panel" id="editModalPanel3">
+                    <div class="modal-form-grid">
+                        <div class="modal-field full-width">
+                            <label>Description <span class="req">*</span></label>
+                            <textarea id="ap_description" rows="3" placeholder="Describe the action…"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>Owner <span class="req">*</span></label>
+                            <input type="text" id="ap_owner" placeholder="Action owner…">
+                        </div>
+                        <div class="modal-field">
+                            <label>Due By <span class="req">*</span></label>
+                            <input type="date" id="ap_dueBy">
+                        </div>
+                        <div class="modal-field">
+                            <label>Type <span class="req">*</span></label>
+                            <select id="ap_type">
+                                <option value="">Select…</option>
+                                <option>Task</option>
+                                <option>Milestone</option>
+                                <option>Checkpoint</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-msg" id="apModalMsg"></div>
+                </div>
             </div>
 
             <div class="risk-modal-footer" id="editModalFooter1">
@@ -5743,7 +5784,12 @@
                 <button class="modal-btn modal-btn-cancel" onclick="closeEditRiskModal()" style="margin-left:auto;">Cancel</button>
             </div>
             <div class="risk-modal-footer" id="editModalFooter2" style="display:none;">
-                <button class="modal-btn modal-btn-commit" onclick="saveEditRiskModal()">✓ Save Changes</button>
+                <button class="modal-btn modal-btn-commit" onclick="saveEditRiskModal()">✓ Update Risk</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeEditRiskModal()">Cancel</button>
+            </div>
+            <div class="risk-modal-footer" id="editModalFooter3" style="display:none;">
+                <button class="modal-btn modal-btn-next" onclick="switchEditModalTab(2)" style="margin-left:0;margin-right:auto;background:#7f8c8d;">← Back</button>
+                <button class="modal-btn modal-btn-commit" onclick="saveActionPlan()" style="background:#1a5276;">✓ Save Action Plan</button>
                 <button class="modal-btn modal-btn-cancel" onclick="closeEditRiskModal()">Cancel</button>
             </div>
         </div>
@@ -5837,7 +5883,7 @@
             <div class="nexus-landing-wordmark">NE<span class="nx-x">X</span>US</div>
             <div class="nexus-landing-subtitle">Active Infrastructure Governance</div>
             <div class="nexus-landing-divider"></div>
-            <div class="nexus-landing-tagline">The Governance Operating System for Critical Public Services</div>
+            <div class="nexus-landing-tagline">Where Governance Really Matters</div>
             <button class="nexus-landing-btn" id="nexusExploreBtn"
                 onclick="enterApp()" title="Explore Nexus">Explore Nexus</button>
         </div>
@@ -5861,7 +5907,7 @@
         <!-- Hero -->
         <div class="ov-hero">
             <h1>Nexus AIG Overview</h1>
-            <p>Your Governance Operating System for Critical Public Services</p>
+            <p>Where Governance Really Matters</p>
             <div class="ov-divider"></div>
         </div>
 
@@ -7475,8 +7521,9 @@
             likelihoodLabels:  ['Unlikely','Possible','Likely','Very likely','Certain'],
             impactLabels:      ['Negligible','Light','Medium','Severe','Catastrophic'],
             proximityLabels:   ['Unknown','Immediate','Imminent','Midterm','Longterm','SA Review'],
-            ragRedThreshold:   15,
-            ragAmberThreshold: 8,
+            ragRedThreshold:          15,
+            ragAmberThreshold:        8,
+            riskAcceptanceThreshold:  15,
             // 3. Data & Sync
             googleSheetId:    '15UflLIpFCKHQBbGBNiLBDcYEZUtPn2Qn',
             cacheTtlMinutes:  5,
@@ -12286,7 +12333,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 return Math.round(totalScore / categoryRisks.length);
             });
 
-            const acceptanceThreshold = new Array(categories.length).fill(30);
+            const acceptanceThreshold = new Array(categories.length).fill(NEXUS_CONFIG.riskAcceptanceThreshold || 15);
 
             currentChart = new Chart(ctx, {
                 type: 'radar',
@@ -13737,6 +13784,8 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
 
             const msg = document.getElementById('editModalMsg');
             if (msg) { msg.className = 'modal-msg'; msg.textContent = ''; }
+            const apMsg = document.getElementById('apModalMsg');
+            if (apMsg) { apMsg.className = 'modal-msg'; apMsg.textContent = ''; }
 
             switchEditModalTab(1);
             document.getElementById('editRiskModal').classList.add('open');
@@ -13828,22 +13877,27 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             const dlCell = newRow.querySelector('.bpr-date-dl');
             if (dlCell) dlCell.textContent = formatBPRDate(dateLogged);
 
-            // Persist into the data structure via autosaveBPR
-            autosaveBPR(section, rowIdx, 'issues',  issuesText);
-            autosaveBPR(section, rowIdx, 'actions', actionsText);
-
-            // Also correct dateLogged directly (autosaveBPR doesn't touch it)
+            // Write directly to the data structure, bypassing the editability
+            // gate in autosaveBPR so the row is always visible in Meeting Mode
             const weekData = businessPlanData.weeks[currentWeek];
-            if (weekData[section][rowIdx]) {
-                weekData[section][rowIdx].dateLogged = dateLogged;
+            if (!weekData[section][rowIdx]) {
+                weekData[section][rowIdx] = {
+                    issues: '', rag: '', actions: '', status: 'OPEN',
+                    dateLogged: dateLogged, lastUpdated: dateLogged,
+                    weekCreated: currentWeek, updateHistory: []
+                };
             }
+            weekData[section][rowIdx].issues      = issuesText;
+            weekData[section][rowIdx].actions     = actionsText;
+            weekData[section][rowIdx].dateLogged  = dateLogged;
+            weekData[section][rowIdx].lastUpdated = new Date().toISOString();
 
             closeVetReviewModal();
             showSettingsToast('Vet Review saved to BPR (' + section.charAt(0).toUpperCase() + section.slice(1) + ') ✓');
         }
 
         function switchEditModalTab(n) {
-            [1,2].forEach(i => {
+            [1,2,3].forEach(i => {
                 document.getElementById('editModalTab' + i).classList.toggle('active', i === n);
                 document.getElementById('editModalPanel' + i).classList.toggle('active', i === n);
                 document.getElementById('editModalFooter' + i).style.display = i === n ? 'flex' : 'none';
@@ -13909,6 +13963,79 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
         document.getElementById('vetReviewModal').addEventListener('click', function(e) {
             if (e.target === this) closeVetReviewModal();
         });
+
+        function saveActionPlan() {
+            const desc    = document.getElementById('ap_description').value.trim();
+            const owner   = document.getElementById('ap_owner').value.trim();
+            const dueBy   = document.getElementById('ap_dueBy').value;
+            const type    = document.getElementById('ap_type').value;
+            const msg     = document.getElementById('apModalMsg');
+
+            // Validate required fields
+            if (!desc || !owner || !dueBy || !type) {
+                msg.className  = 'modal-msg error';
+                msg.textContent = 'Please fill in all required fields (marked *).';
+                return;
+            }
+
+            // BPR section from Strategic Priority
+            const risk = risks.find(r => r.id === _editingRiskId);
+            if (!risk) { alert('Risk not found.'); return; }
+
+            const validSections = ['customer','investor','finance','technology','operations'];
+            const section = (risk.strategicPriority || '').toLowerCase().trim();
+            if (!validSections.includes(section)) {
+                msg.className  = 'modal-msg error';
+                msg.textContent = 'Cannot save: this risk has no Strategic Priority set. Set one on tab 1 first.';
+                return;
+            }
+
+            // Short ID for the header
+            const m = String(risk.id).match(/^(.*)-(\d{8})$/);
+            const shortId = m ? m[1] : risk.id;
+
+            // Format Due By as readable date
+            const dueDateFmt = dueBy
+                ? (d => d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getFullYear())(new Date(dueBy))
+                : '—';
+
+            // Build BPR field values
+            const issuesText  = 'ACTION PLAN (' + shortId + '):\nOwner: ' + owner + '\nDescription: ' + desc;
+            const actionsText = 'Type: ' + type + '\nDue By: ' + dueDateFmt;
+
+            // Add row and populate
+            addBPRRow(section);
+
+            const tbody  = document.getElementById(section + '-tbody');
+            const newRow = tbody.lastElementChild;
+            const rowIdx = tbody.children.length - 1;
+
+            const tas = newRow.querySelectorAll('.bpr-input');
+            if (tas[0]) { tas[0].value = issuesText;  autoExpandTextarea(tas[0]); }
+            if (tas[1]) { tas[1].value = actionsText; autoExpandTextarea(tas[1]); }
+
+            // Write directly to the data structure, bypassing the editability
+            // gate in autosaveBPR so the row is always visible in Meeting Mode
+            const weekData = businessPlanData.weeks[currentWeek];
+            if (!weekData[section][rowIdx]) {
+                weekData[section][rowIdx] = {
+                    issues: '', rag: '', actions: '', status: 'OPEN',
+                    dateLogged: new Date().toISOString(), lastUpdated: new Date().toISOString(),
+                    weekCreated: currentWeek, updateHistory: []
+                };
+            }
+            weekData[section][rowIdx].issues      = issuesText;
+            weekData[section][rowIdx].actions     = actionsText;
+            weekData[section][rowIdx].lastUpdated = new Date().toISOString();
+
+            // Clear fields and show success
+            document.getElementById('ap_description').value = '';
+            document.getElementById('ap_owner').value       = '';
+            document.getElementById('ap_dueBy').value       = '';
+            document.getElementById('ap_type').value        = '';
+            msg.className   = 'modal-msg success';
+            msg.textContent = 'Action Plan saved to BPR (' + section.charAt(0).toUpperCase() + section.slice(1) + ') ✓';
+        }
 
         // ==================== END EDIT RISK MODAL ====================
 
@@ -15010,6 +15137,13 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
         // ==================== SETTINGS PANEL ====================
 
         function openSettings() {
+            // Always open with every section collapsed
+            ['cfg_s1','cfg_s2','cfg_s3','cfg_s4','cfg_s5','cfg_s6'].forEach(function(id) {
+                var body  = document.getElementById(id);
+                var arrow = document.querySelector('[data-acc="' + id + '"] .cfg-arrow');
+                if (body)  body.style.display = 'none';
+                if (arrow) arrow.style.transform = 'rotate(-90deg)';
+            });
             // Populate panel from current config before showing
             _settingsToPanel();
             const ov = document.getElementById('nexusSettingsOverlay');
@@ -15061,6 +15195,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             document.getElementById('cfg_proximityLabels').value = cfg.proximityLabels.join('\n');
             document.getElementById('cfg_ragRed').value = cfg.ragRedThreshold;
             document.getElementById('cfg_ragAmber').value = cfg.ragAmberThreshold;
+            document.getElementById('cfg_riskAcceptanceThreshold').value = cfg.riskAcceptanceThreshold;
             // Section 3: Data & Sync
             document.getElementById('cfg_sheetId').value = cfg.googleSheetId;
             document.getElementById('cfg_cacheTtl').value = cfg.cacheTtlMinutes;
@@ -15109,6 +15244,8 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             const ra = parseInt(document.getElementById('cfg_ragAmber').value, 10);
             if (!isNaN(rr) && rr > 0) cfg.ragRedThreshold = rr;
             if (!isNaN(ra) && ra > 0) cfg.ragAmberThreshold = ra;
+            const rat = parseInt(document.getElementById('cfg_riskAcceptanceThreshold').value, 10);
+            if (!isNaN(rat) && rat > 0) cfg.riskAcceptanceThreshold = rat;
 
             // Section 3: Data & Sync
             const sid = document.getElementById('cfg_sheetId').value.trim();
@@ -15444,6 +15581,15 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                                 <input type="number" id="cfg_ragAmber" class="cfg-input" min="1" max="125">
                             </div>
                             <div class="cfg-hint">Risk score = likelihood × impact × proximity × mitigation factor. Scores below amber threshold = Green.</div>
+                        </div>
+                        <div class="cfg-field">
+                            <label class="cfg-label">Risk Acceptance Threshold</label>
+                            <div class="cfg-rag-row">
+                                <div class="cfg-rag-dot" style="background:#27ae60"></div>
+                                <label>Accept — score ≤</label>
+                                <input type="number" id="cfg_riskAcceptanceThreshold" class="cfg-input" min="1" max="125" oninput="const v=parseInt(this.value,10); if(!isNaN(v)&&v>0){NEXUS_CONFIG.riskAcceptanceThreshold=v; updateRadarChart();}"  >
+                            </div>
+                            <div class="cfg-hint">Risks scoring at or below this value are considered within acceptable tolerance and require no escalation.</div>
                         </div>
                     </div>
                 </div>
