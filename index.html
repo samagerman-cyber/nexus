@@ -2834,6 +2834,23 @@
             background: #e74c3c;
             color: white;
         }
+        .risk-modal-tab.locked {
+            opacity: 1; cursor: not-allowed; pointer-events: none;
+            color: #b0bec5; background: #f0f2f5;
+        }
+        .risk-modal-tab.locked .tab-num {
+            background: #cfd8dc; color: #fff;
+        }
+        .risk-modal-tab.locked .tab-lock {
+            font-size: 0.85em; margin-left: 4px; opacity: 0.7;
+        }
+        #apLockedMsg {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100%; padding: 40px 20px;
+            text-align: center; color: #7f8c8d;
+        }
+        #apLockedMsg .ap-lock-icon { font-size: 2.4em; margin-bottom: 12px; }
+        #apLockedMsg p { font-size: 0.9em; line-height: 1.6; max-width: 320px; }
 
         /* Tab panels */
         .risk-modal-body {
@@ -5739,6 +5756,10 @@
 
                 <!-- Tab 3: Action Planning -->
                 <div class="risk-tab-panel" id="editModalPanel3">
+                    <div id="apLockedMsg" style="display:none">
+                        <div class="ap-lock-icon">🔒</div>
+                        <p>Action Planning is locked until a <strong>Vet Review</strong> has been completed for this risk.<br><br>Run <em>Scan Register</em>, then open the Vet Review portal for this risk to unlock.</p>
+                    </div>
                     <div class="modal-form-grid">
                         <div class="modal-field full-width">
                             <label>Description <span class="req">*</span></label>
@@ -5955,7 +5976,7 @@
             </div>
             <div class="app-topbar-title">
                 <h1>Active Infrastructure Governance OS</h1>
-                <p>Version 0.073</p>
+                <p>Version 0.074</p>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:4px;gap:2px;">
                 <span id="activeOrgBadge" style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.3px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;display:none;"></span>
@@ -6013,7 +6034,7 @@
                 <div class="home-page" id="homePage">
                     <div class="home-welcome">
                         <h2>Welcome to Nexus</h2>
-                        <p>Version 0.073</p>
+                        <p>Version 0.074</p>
                     </div>
                     <div style="width:100%;max-width:540px;">
                     <div class="home-ai-box" id="homeAiBox">
@@ -6120,7 +6141,7 @@
                     <div class="container">
                         <div class="header">
                             <h1>Active Infrastructure Governance OS</h1>
-                            <p>Version 0.073</p>
+                            <p>Version 0.074</p>
                         </div>
                         <div class="content">
             <!-- Dashboard Tab -->
@@ -7520,9 +7541,21 @@
             // 4. AI & Automation
             aiModel:          'claude-sonnet-4-20250514',
             priorWeeksCount:  6,
+            // Vetting criteria (any criterion = true flags the risk)
+            scanFlagRed:            true,   // flag if RAG = red
+            scanFlagImpactMin:      5,      // flag if impact >= this (1–5)
+            scanFlagProximityMax:   2,      // flag if proximity <= this (Imminent=2)
+            scanFlagSAReview:       true,   // flag if proximity = SA Review (5)
+            scanFlagNoMitigation:   true,   // flag if mitigation status = None
+            // Register health band thresholds (upper % boundary for each band)
+            scanHealthStrong:       5,
+            scanHealthAcceptable:   20,
+            scanHealthUnstable:     40,
+            scanHealthWeak:         79,
             // 5. Display
             riskPageSize:     20,
             peoplePageSize:   20,
+            dateFormat:       'DD/MM/YYYY',
             // 6. Tenant Organisations (auto-populated from People data)
             tenantOrgs:       [],
             activeTenantOrg:  '',
@@ -7570,34 +7603,40 @@
                 orgs.map(o => `<option value="${o}"${o === current ? ' selected' : ''}>${o}</option>`).join('');
         }
 
-        // Returns people names filtered by the active org (falls back to teamMembers if none set)
+        // Returns people names filtered by the active org.
+        // When no org is active, uses everyone in the People table (if loaded),
+        // otherwise falls back to the teamMembers config list.
         function getActivePeopleNames() {
             const activeOrg = NEXUS_CONFIG.activeTenantOrg || '';
             const people    = window._peopleData || [];
             const orgKey    = window._peopleOrgColKey;
 
-            if (activeOrg && people.length && orgKey) {
-                const getField = (row, keys) => {
-                    for (const k of keys) {
-                        const found = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
-                        if (found && row[found] != null) {
-                            const v = String(row[found]).trim();
-                            if (v) return v;
-                        }
+            const getField = (row, keys) => {
+                for (const k of keys) {
+                    const found = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+                    if (found && row[found] != null) {
+                        const v = String(row[found]).trim();
+                        if (v) return v;
                     }
-                    return '';
-                };
-                return people
-                    .filter(row => String(row[orgKey] || '').trim() === activeOrg)
+                }
+                return '';
+            };
+
+            if (people.length) {
+                // Filter by active org when one is set; otherwise include everyone
+                const rows = (activeOrg && orgKey)
+                    ? people.filter(row => String(row[orgKey] || '').trim() === activeOrg)
+                    : people;
+                const names = rows
                     .map(row => {
                         const first = getField(row, ['first name','firstname','given name','fname']);
                         const last  = getField(row, ['surname','last name','lastname','family name','lname']);
-                        const full  = [first, last].filter(Boolean).join(' ');
-                        return full;
+                        return [first, last].filter(Boolean).join(' ');
                     })
                     .filter(name => name.replace(/\s/g, '').length > 0);
+                if (names.length) return names;
             }
-            // Fallback: all team members (filter out any blank entries)
+            // Fallback: teamMembers config list (used before People data is synced)
             return (NEXUS_CONFIG.teamMembers || []).filter(n => n && n.trim().length > 0);
         }
 
@@ -8026,8 +8065,8 @@
                     }
                     const _dl = row.querySelector('.bpr-date-dl');
                     const _lu = row.querySelector('.bpr-date-lu');
-                    if (_dl) _dl.textContent = formatBPRDate(rowData.dateLogged);
-                    if (_lu) _lu.textContent = formatBPRDate(rowData.lastUpdated);
+                    setBPRDateCell(_dl, rowData.dateLogged);
+                    setBPRDateCell(_lu, rowData.lastUpdated);
                 });
 
                 // Ensure at least one empty row in each section
@@ -8444,8 +8483,8 @@
                         if (rowData.saItem) row.classList.add('bpr-sa-row');
                         const dlCell = row.querySelector('.bpr-date-dl');
                         const luCell = row.querySelector('.bpr-date-lu');
-                        if (dlCell) dlCell.textContent = formatBPRDate(rowData.dateLogged);
-                        if (luCell) luCell.textContent = formatBPRDate(rowData.lastUpdated);
+                        setBPRDateCell(dlCell, rowData.dateLogged);
+                        setBPRDateCell(luCell, rowData.lastUpdated);
                     });
                 }
 
@@ -8586,7 +8625,7 @@
                 const msgEl = document.getElementById('registerSyncMsg');
                 if (barEl)  { barEl.classList.remove('active'); barEl.style.opacity = ''; }
                 if (msgEl)  { msgEl.style.display = 'none'; msgEl.textContent = ''; }
-                renderPage();
+                updateRiskTable(); // restore full register, re-sorted
                 return;
             }
 
@@ -8612,17 +8651,17 @@
                 if (svgEl)   { svgEl.innerHTML = ''; svgEl.style.display = 'none'; }
                 if (labelEl) { labelEl.style.display = 'none'; labelEl.innerHTML = _origLabel; }
 
-                // Find matching risks — flag if ANY criterion is met:
-                // • RAG = red
-                // • Proximity = SA Review (5) or Imminent (2)
-                // • Impact = 5 (Very High)
-                // • Mitigation Status = None
+                // Find matching risks — flag if ANY enabled criterion is met (driven by config)
+                const _cfg        = NEXUS_CONFIG;
+                const _impMin     = _cfg.scanFlagImpactMin    ?? 5;
+                const _proxMax    = _cfg.scanFlagProximityMax ?? 2;
                 const matched = risks.filter(function(r) {
-                    return r.rag === 'red' ||
-                           r.proximity === 5 ||
-                           r.proximity === 2 ||
-                           r.impact === 5 ||
-                           (r.mitigationStatus || '').includes('None');
+                    if (_cfg.scanFlagRed          && r.rag === 'red')                            return true;
+                    if (_cfg.scanFlagSAReview     && r.proximity === 5)                          return true;
+                    if (_proxMax >= 0             && r.proximity <= _proxMax)                    return true;
+                    if (_impMin  <= 5             && r.impact >= _impMin)                        return true;
+                    if (_cfg.scanFlagNoMitigation && (r.mitigationStatus || '').includes('None')) return true;
+                    return false;
                 });
 
                 window._scannedRiskIds = new Set(matched.map(function(r) { return r.id; }));
@@ -8632,16 +8671,20 @@
                 btn.innerHTML = '✕ Clear Scan';
                 btn.classList.add('on');
 
-                // Calculate register health based on % of vettable risks
+                // Calculate register health based on % of vettable risks (thresholds from config)
                 const total = risks.length;
                 const pct   = total > 0 ? (matched.length / total) * 100 : 0;
+                const _hs = _cfg.scanHealthStrong     ?? 5;
+                const _ha = _cfg.scanHealthAcceptable ?? 20;
+                const _hu = _cfg.scanHealthUnstable   ?? 40;
+                const _hw = _cfg.scanHealthWeak       ?? 79;
                 var health;
-                if      (pct === 0)  health = 'Flawless';
-                else if (pct <   5)  health = 'Strong';
-                else if (pct <  20)  health = 'Acceptable';
-                else if (pct <= 40)  health = 'Unstable';
-                else if (pct <= 79)  health = 'Weak';
-                else                 health = 'Catastrophic';
+                if      (pct === 0)   health = 'Flawless';
+                else if (pct <  _hs)  health = 'Strong';
+                else if (pct <  _ha)  health = 'Acceptable';
+                else if (pct <= _hu)  health = 'Unstable';
+                else if (pct <= _hw)  health = 'Weak';
+                else                  health = 'Catastrophic';
 
                 // Show result in sync bar message
                 if (msgEl) {
@@ -8655,7 +8698,12 @@
                     msgEl.style.display = 'block';
                 }
 
-                renderPage();
+                // Show only flagged risks (when > 0); leave full register on zero
+                if (matched.length > 0) {
+                    updateRiskTable(matched);
+                } else {
+                    renderPage();
+                }
             }, 3000);
         }
         // ── End Scan Register ─────────────────────────────────────────────────────
@@ -8936,7 +8984,7 @@
         var _PEOPLE_NARROW_COLS = ['first name', 'username'];
 
         // Column names (lowercase) that should be rendered as formatted dates
-        var _PEOPLE_DATE_COL_HINTS = ['date', 'time', 'created', 'modified', 'updated', 'joined', 'registered', 'last login', 'lastlogin'];
+        var _PEOPLE_DATE_COL_HINTS = ['date', 'time', 'created', 'modified', 'updated', 'joined', 'registered', 'last login', 'lastlogin', 'log in', 'log out', 'sign in', 'sign out'];
 
         function _isPeopleDateCol(colName) {
             var lower = colName.toLowerCase();
@@ -8964,7 +9012,13 @@
             var yyyy = d.getFullYear();
             var hh   = String(d.getHours()).padStart(2, '0');
             var min  = String(d.getMinutes()).padStart(2, '0');
-            return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+            var fmt  = (NEXUS_CONFIG && NEXUS_CONFIG.dateFormat) || 'DD/MM/YYYY';
+            switch (fmt) {
+                case 'DD/MM/YYYY HH:MM': return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+                case 'MM/DD/YYYY HH:MM': return mm + '/' + dd + '/' + yyyy + ' ' + hh + ':' + min;
+                case 'MM/DD/YYYY':       return mm + '/' + dd + '/' + yyyy;
+                default:                 return dd + '/' + mm + '/' + yyyy;
+            }
         }
 
         var _peoplePage       = 1;
@@ -9666,6 +9720,7 @@
                     buildPeopleRoleFilter();
                     autoPopulateTenantOrgs();
                     autoPopulateRoles();
+                    populateConfigDropdowns(); // rebuild owner/reviewer selects with live People data
                 }
                 const parts = [];
                 if (riskData.length > 0) parts.push(riskData.length + ' risk' + (riskData.length !== 1 ? 's' : '') + ' loaded');
@@ -10060,10 +10115,44 @@
         function formatBPRDate(iso) {
             if (!iso) return '—';
             try {
-                const d = new Date(iso);
-                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+                const d      = new Date(iso);
+                const fmt    = (NEXUS_CONFIG && NEXUS_CONFIG.dateFormat) || 'DD/MM/YYYY';
+                const dd     = String(d.getDate()).padStart(2, '0');
+                const mm     = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy   = d.getFullYear();
+                const hh     = String(d.getHours()).padStart(2, '0');
+                const min    = String(d.getMinutes()).padStart(2, '0');
+                switch (fmt) {
+                    case 'DD/MM/YYYY HH:MM': return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+                    case 'MM/DD/YYYY HH:MM': return `${mm}/${dd}/${yyyy} ${hh}:${min}`;
+                    case 'MM/DD/YYYY':       return `${mm}/${dd}/${yyyy}`;
+                    default:                 return `${dd}/${mm}/${yyyy}`;
+                }
             } catch(e) { return '—'; }
+        }
+
+        function setBPRDateCell(el, iso) {
+            if (!el) return;
+            el.dataset.iso = iso || '';
+            el.textContent = formatBPRDate(iso);
+        }
+
+        function refreshAllDateCells() {
+            document.querySelectorAll('.bpr-date-dl[data-iso], .bpr-date-lu[data-iso]').forEach(function(el) {
+                el.textContent = formatBPRDate(el.dataset.iso);
+            });
+        }
+
+        function applyDateFormatLive() {
+            var sel = document.getElementById('cfg_dateFormat');
+            if (sel) NEXUS_CONFIG.dateFormat = sel.value;
+            // Risk Register — guard against null in case register has never been visited
+            var tbody = document.getElementById('riskTableBody');
+            if (tbody) renderPage();
+            // People table
+            renderPeopleTable();
+            // BPR date cells already in DOM
+            refreshAllDateCells();
         }
 
         function addBPRRow(section) {
@@ -10085,8 +10174,8 @@
                     </select>
                 </td>
                 <td><textarea class="bpr-input" placeholder="Enter actions and outcomes..." oninput="autosaveBPR('${section}', ${rowNumber - 1}, 'actions', this.value); autoExpandTextarea(this);"></textarea></td>
-                <td class="bpr-date-dl">${formatBPRDate(nowIso)}</td>
-                <td class="bpr-date-lu">${formatBPRDate(nowIso)}</td>
+                <td class="bpr-date-dl" data-iso="${nowIso}">${formatBPRDate(nowIso)}</td>
+                <td class="bpr-date-lu" data-iso="${nowIso}">${formatBPRDate(nowIso)}</td>
                 <td>
                     <select class="status-dropdown" onchange="autosaveBPR('${section}', ${rowNumber - 1}, 'status', this.value)">
                         <option value="OPEN">OPEN</option>
@@ -10196,7 +10285,7 @@
                     const _tbody = document.getElementById(section + '-tbody');
                     if (_tbody && _tbody.children[rowIndex]) {
                         const _luCell = _tbody.children[rowIndex].querySelector('.bpr-date-lu');
-                        if (_luCell) _luCell.textContent = formatBPRDate(weekData[section][rowIndex].lastUpdated);
+                        setBPRDateCell(_luCell, weekData[section][rowIndex].lastUpdated);
                     }
                 }
             }
@@ -10604,8 +10693,8 @@
                     }
                     const _dl2 = row.querySelector('.bpr-date-dl');
                     const _lu2 = row.querySelector('.bpr-date-lu');
-                    if (_dl2) _dl2.textContent = formatBPRDate(rowData.dateLogged);
-                    if (_lu2) _lu2.textContent = formatBPRDate(rowData.lastUpdated);
+                    setBPRDateCell(_dl2, rowData.dateLogged);
+                    setBPRDateCell(_lu2, rowData.lastUpdated);
                 });
 
                 // Ensure at least one empty row in each section
@@ -12517,11 +12606,12 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 // Extract date and truncated ID from risk.id (format: PREFIX-YYYYMMDD)
                 function extractRiskDisplay(id) {
                     const s = String(id || '');
-                    // Last segment after final hyphen if it looks like YYYYMMDD (8 digits)
                     const m = s.match(/^(.*)-(\d{8})$/);
                     if (m) {
                         const y = m[2].slice(0,4), mo = m[2].slice(4,6), d = m[2].slice(6,8);
-                        return { shortId: m[1], dateStr: d + '/' + mo + '/' + y };
+                        const fmt = (NEXUS_CONFIG && NEXUS_CONFIG.dateFormat) || 'DD/MM/YYYY';
+                        const dateStr = fmt.startsWith('MM') ? mo+'/'+d+'/'+y : d+'/'+mo+'/'+y;
+                        return { shortId: m[1], dateStr };
                     }
                     return { shortId: s, dateStr: '' };
                 }
@@ -13833,6 +13923,22 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             const apMsg = document.getElementById('apModalMsg');
             if (apMsg) { apMsg.className = 'modal-msg'; apMsg.textContent = ''; }
 
+            // Gate Action Planning tab on vet review status
+            const tab3     = document.getElementById('editModalTab3');
+            const apForm   = document.querySelector('#editModalPanel3 .modal-form-grid');
+            const apLocked = document.getElementById('apLockedMsg');
+            if (risk.vetReviewed) {
+                tab3.classList.remove('locked');
+                tab3.innerHTML = '<span class="tab-num">3</span> Action Planning';
+                if (apForm)   apForm.style.display   = '';
+                if (apLocked) apLocked.style.display = 'none';
+            } else {
+                tab3.classList.add('locked');
+                tab3.innerHTML = '<span class="tab-num">3</span> Action Planning <span class="tab-lock">🔒</span>';
+                if (apForm)   apForm.style.display   = 'none';
+                if (apLocked) apLocked.style.display = 'flex';
+            }
+
             switchEditModalTab(1);
             document.getElementById('editRiskModal').classList.add('open');
         }
@@ -13921,7 +14027,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
 
             // Override the Date Logged cell with the review date
             const dlCell = newRow.querySelector('.bpr-date-dl');
-            if (dlCell) dlCell.textContent = formatBPRDate(dateLogged);
+            setBPRDateCell(dlCell, dateLogged);
 
             // Write directly to the data structure, bypassing the editability
             // gate in autosaveBPR so the row is always visible in Meeting Mode
@@ -13938,11 +14044,17 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             weekData[section][rowIdx].dateLogged  = dateLogged;
             weekData[section][rowIdx].lastUpdated = new Date().toISOString();
 
+            // Mark risk as vetted so Action Planning tab unlocks
+            risk.vetReviewed = true;
+
             closeVetReviewModal();
             showSettingsToast('Vet Review saved to BPR (' + section.charAt(0).toUpperCase() + section.slice(1) + ') ✓');
         }
 
         function switchEditModalTab(n) {
+            // Block navigation to locked tabs
+            const targetTab = document.getElementById('editModalTab' + n);
+            if (targetTab && targetTab.classList.contains('locked')) return;
             [1,2,3].forEach(i => {
                 document.getElementById('editModalTab' + i).classList.toggle('active', i === n);
                 document.getElementById('editModalPanel' + i).classList.toggle('active', i === n);
@@ -14479,8 +14591,8 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                         // Overwrite date cells with stored values (addBPRRow stamps today by default)
                         const dlCell = row.querySelector('.bpr-date-dl');
                         const luCell = row.querySelector('.bpr-date-lu');
-                        if (dlCell) dlCell.textContent = formatBPRDate(rowData.dateLogged);
-                        if (luCell) luCell.textContent = formatBPRDate(rowData.lastUpdated);
+                        setBPRDateCell(dlCell, rowData.dateLogged);
+                        setBPRDateCell(luCell, rowData.lastUpdated);
 
                         // Make all inputs read-only in show-all mode
                         row.querySelectorAll('textarea, select, button').forEach(el => el.disabled = true);
@@ -15248,7 +15360,18 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             // Section 4: AI & Automation
             document.getElementById('cfg_aiModel').value = cfg.aiModel;
             document.getElementById('cfg_priorWeeks').value = cfg.priorWeeksCount;
+            // Vetting criteria
+            document.getElementById('cfg_scanFlagRed').value          = cfg.scanFlagRed          ? '1' : '0';
+            document.getElementById('cfg_scanFlagNoMitigation').value = cfg.scanFlagNoMitigation  ? '1' : '0';
+            document.getElementById('cfg_scanFlagImpactMin').value    = String(cfg.scanFlagImpactMin   ?? 5);
+            document.getElementById('cfg_scanFlagProximityMax').value = String(cfg.scanFlagProximityMax ?? 2);
+            document.getElementById('cfg_scanFlagSAReview').value     = cfg.scanFlagSAReview      ? '1' : '0';
+            document.getElementById('cfg_scanHealthStrong').value     = cfg.scanHealthStrong     ?? 5;
+            document.getElementById('cfg_scanHealthAcceptable').value = cfg.scanHealthAcceptable ?? 20;
+            document.getElementById('cfg_scanHealthUnstable').value   = cfg.scanHealthUnstable   ?? 40;
+            document.getElementById('cfg_scanHealthWeak').value       = cfg.scanHealthWeak       ?? 79;
             // Section 5: Display
+            document.getElementById('cfg_dateFormat').value    = cfg.dateFormat || 'DD/MM/YYYY';
             document.getElementById('cfg_peoplePageSize').value = cfg.peoplePageSize;
             document.getElementById('cfg_riskPageSize').value  = cfg.riskPageSize;
             // Tenant Organisations (part of Section 1)
@@ -15306,8 +15429,23 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             cfg.aiModel = document.getElementById('cfg_aiModel').value;
             const pw = parseInt(document.getElementById('cfg_priorWeeks').value, 10);
             if (!isNaN(pw) && pw > 0) cfg.priorWeeksCount = Math.min(pw, 12);
+            // Vetting criteria
+            cfg.scanFlagRed           = document.getElementById('cfg_scanFlagRed').value === '1';
+            cfg.scanFlagNoMitigation  = document.getElementById('cfg_scanFlagNoMitigation').value === '1';
+            cfg.scanFlagImpactMin     = parseInt(document.getElementById('cfg_scanFlagImpactMin').value, 10);
+            cfg.scanFlagProximityMax  = parseInt(document.getElementById('cfg_scanFlagProximityMax').value, 10);
+            cfg.scanFlagSAReview      = document.getElementById('cfg_scanFlagSAReview').value === '1';
+            const _shs = parseInt(document.getElementById('cfg_scanHealthStrong').value, 10);
+            const _sha = parseInt(document.getElementById('cfg_scanHealthAcceptable').value, 10);
+            const _shu = parseInt(document.getElementById('cfg_scanHealthUnstable').value, 10);
+            const _shw = parseInt(document.getElementById('cfg_scanHealthWeak').value, 10);
+            if (!isNaN(_shs) && _shs > 0) cfg.scanHealthStrong     = _shs;
+            if (!isNaN(_sha) && _sha > 0) cfg.scanHealthAcceptable  = _sha;
+            if (!isNaN(_shu) && _shu > 0) cfg.scanHealthUnstable    = _shu;
+            if (!isNaN(_shw) && _shw > 0) cfg.scanHealthWeak        = _shw;
 
             // Section 5: Display
+            cfg.dateFormat = document.getElementById('cfg_dateFormat').value || 'DD/MM/YYYY';
             const pps = parseInt(document.getElementById('cfg_peoplePageSize').value, 10);
             if (!isNaN(pps) && pps > 0) cfg.peoplePageSize = pps;
             const rps = parseInt(document.getElementById('cfg_riskPageSize').value, 10);
@@ -15320,13 +15458,12 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
             _cacheTimestamp = 0;
             // Rebuild all dropdowns + BPR meta
             populateConfigDropdowns();
-            // Re-render affected views
-            if (document.getElementById('people') && document.getElementById('people').classList.contains('active')) {
-                renderPeopleTable();
-            }
-            if (document.getElementById('register') && document.getElementById('register').classList.contains('active')) {
-                updateRiskTable();
-            }
+            // Re-render all date-sensitive views unconditionally (settings is an overlay,
+            // so the active-tab check would always be false and nothing would refresh)
+            var riskBody = document.getElementById('riskTableBody');
+            if (riskBody) updateRiskTable();
+            renderPeopleTable();
+            refreshAllDateCells();
             updateBPRSummaryView();
             showSettingsToast('Settings saved ✓');
         }
@@ -15445,6 +15582,7 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                 background: rgba(255,255,255,0.12); border: none; color: #fff;
                 width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
                 font-size: 18px; display: flex; align-items: center; justify-content: center;
+                margin-left: auto; flex-shrink: 0;
             }
             .cfg-close-btn:hover { background: rgba(255,255,255,0.22); }
             .cfg-body { flex: 1; overflow-y: auto; padding: 12px 16px 80px; }
@@ -15692,6 +15830,79 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                             <input type="number" id="cfg_priorWeeks" class="cfg-input" min="1" max="12" style="width:70px">
                             <div class="cfg-hint">Number of prior week columns displayed in the BPR summary view (1–12).</div>
                         </div>
+
+                        <!-- Risk Vetting sub-section -->
+                        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e0e4ea;">
+                            <div style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#5a6a80;margin-bottom:10px;">⚙ Risk Vetting — Scan Criteria</div>
+                            <div class="cfg-hint" style="margin-bottom:10px;">A risk is flagged for vetting if <strong>any</strong> enabled criterion is met.</div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Flag if RAG = Red</label>
+                                    <select id="cfg_scanFlagRed" class="cfg-input" style="width:100%">
+                                        <option value="1">Enabled</option>
+                                        <option value="0">Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Flag if Mitigation = None</label>
+                                    <select id="cfg_scanFlagNoMitigation" class="cfg-input" style="width:100%">
+                                        <option value="1">Enabled</option>
+                                        <option value="0">Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Flag if Impact ≥</label>
+                                    <select id="cfg_scanFlagImpactMin" class="cfg-input" style="width:100%">
+                                        <option value="1">1 — any impact</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5 — max only</option>
+                                        <option value="6">Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Flag if Proximity ≤</label>
+                                    <select id="cfg_scanFlagProximityMax" class="cfg-input" style="width:100%">
+                                        <option value="0">0 — Unknown only</option>
+                                        <option value="1">1 — Immediate</option>
+                                        <option value="2">2 — Imminent</option>
+                                        <option value="3">3 — Midterm</option>
+                                        <option value="4">4 — Longterm</option>
+                                        <option value="-1">Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="cfg-field" style="margin:0;grid-column:1/-1">
+                                    <label class="cfg-label">Flag if Proximity = SA Review</label>
+                                    <select id="cfg_scanFlagSAReview" class="cfg-input" style="width:100%">
+                                        <option value="1">Enabled</option>
+                                        <option value="0">Disabled</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#5a6a80;margin:14px 0 8px;">⚙ Register Health Bands (% flagged)</div>
+                            <div class="cfg-hint" style="margin-bottom:10px;">Upper % boundary for each band. Catastrophic = anything above Weak.</div>
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Strong &lt;</label>
+                                    <input type="number" id="cfg_scanHealthStrong" class="cfg-input" min="1" max="99" style="width:100%">
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Acceptable &lt;</label>
+                                    <input type="number" id="cfg_scanHealthAcceptable" class="cfg-input" min="1" max="99" style="width:100%">
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Unstable ≤</label>
+                                    <input type="number" id="cfg_scanHealthUnstable" class="cfg-input" min="1" max="99" style="width:100%">
+                                </div>
+                                <div class="cfg-field" style="margin:0">
+                                    <label class="cfg-label">Weak ≤</label>
+                                    <input type="number" id="cfg_scanHealthWeak" class="cfg-input" min="1" max="99" style="width:100%">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -15702,6 +15913,15 @@ Respond ONLY with a valid JSON object — no markdown, no preamble, no explanati
                         <span class="cfg-arrow" style="transform:rotate(-90deg)">▼</span>
                     </div>
                     <div class="cfg-section-body" id="cfg_s5" style="display:none">
+                        <div class="cfg-field">
+                            <label class="cfg-label">Date Format</label>
+                            <select id="cfg_dateFormat" class="cfg-input" style="width:100%;" onchange="applyDateFormatLive();">
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY HH:MM">DD/MM/YYYY HH:MM</option>
+                                <option value="MM/DD/YYYY HH:MM">MM/DD/YYYY HH:MM</option>
+                            </select>
+                        </div>
                         <div class="cfg-field">
                             <label class="cfg-label">People Table — Rows per Page</label>
                             <input type="number" id="cfg_peoplePageSize" class="cfg-input" min="5" max="200" style="width:80px">
