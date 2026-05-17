@@ -6169,7 +6169,7 @@
             </div>
             <div class="app-topbar-title">
                 <h1>Active Infrastructure Governance OS</h1>
-                <p>Version 0.082</p>
+                <p>Version 0.083</p>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:4px;gap:2px;">
                 <span id="activeOrgBadge" style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.3px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;display:none;"></span>
@@ -6228,7 +6228,7 @@
                 <div class="home-page" id="homePage">
                     <div class="home-welcome">
                         <h2>Welcome to Nexus</h2>
-                        <p>Version 0.082</p>
+                        <p>Version 0.083</p>
                     </div>
                     <div style="width:100%;max-width:540px;">
                     <div class="home-ai-box" id="homeAiBox">
@@ -6335,7 +6335,7 @@
                     <div class="container">
                         <div class="header">
                             <h1>Active Infrastructure Governance OS</h1>
-                            <p>Version 0.082</p>
+                            <p>Version 0.083</p>
                         </div>
                         <div class="content">
             <!-- Dashboard Tab -->
@@ -6909,6 +6909,10 @@
                         <div class="ribbon-sep"></div>
                         <button class="rbtn rbtn-neutral" id="bprExpandCollapseBtn" onclick="toggleBPRExpandAll()" style="display:none;">⊞ Expand All</button>
                         <div class="ribbon-sep" id="bprExpandSep" style="display:none;"></div>
+                    </div>
+
+                    <!-- Include SA Risks toggle — kept visible even when Meeting Mode is on -->
+                    <div class="bpr-btn-group" id="bprSAItemsGroup">
                         <div class="ribbon-sep"></div>
                         <button class="rbtn rbtn-toggle" id="saItemsBtn" onclick="toggleSAItems()">
                             Include SA Risks <span class="toggle-status" id="saItemsStatus" style="margin-left:5px;font-size:10px;background:rgba(0,0,0,0.1);padding:1px 6px;border-radius:8px;">OFF</span>
@@ -8114,6 +8118,12 @@
                 // Clear SA review risks
                 clearSAItemsAutomatically();
             }
+
+            // If Meeting Mode is active, re-render the 3-window view so the
+            // SA Risks change is reflected without exiting and re-entering.
+            if (meetingMode && typeof renderMeetingView === 'function') {
+                renderMeetingView();
+            }
         }
 
         /**
@@ -8561,18 +8571,22 @@
             const showAllBtn  = document.getElementById('showAllBtn');
             const warningEl   = document.getElementById('historicalWarning');
             const normalBtns  = document.getElementById('bprNormalBtns');
+            const saItemsGrp  = document.getElementById('bprSAItemsGroup');
             const navBtns     = document.getElementById('bprNavBtns');
             const weekNavWrap = document.querySelector('.ribbon-week-nav-wrap');
             if (isCurrentWeekEditable()) {
                 if (meetingMode) {
-                    // Meeting mode active — hide all button groups, grey out week nav
+                    // Meeting mode active — hide normal/nav groups, but keep
+                    // the Include SA Risks toggle visible. Grey out week nav.
                     if (normalBtns) normalBtns.classList.add('hidden');
+                    if (saItemsGrp) saItemsGrp.classList.remove('hidden');
                     if (navBtns)    navBtns.classList.add('hidden');
                     if (warningEl)  warningEl.classList.remove('hidden');
                     if (weekNavWrap) weekNavWrap.classList.add('nav-disabled');
                 } else {
-                    // Normal current week — show normal buttons
+                    // Normal current week — show normal buttons + SA Risks toggle
                     if (normalBtns) normalBtns.classList.remove('hidden');
+                    if (saItemsGrp) saItemsGrp.classList.remove('hidden');
                     if (navBtns)    navBtns.classList.add('hidden');
                     if (warningEl)  warningEl.classList.add('hidden');
                     if (weekNavWrap) weekNavWrap.classList.remove('nav-disabled');
@@ -8581,6 +8595,7 @@
             } else {
                 // On historical week — show nav buttons only; week nav stays fully active
                 if (normalBtns)  normalBtns.classList.add('hidden');
+                if (saItemsGrp)  saItemsGrp.classList.add('hidden');
                 if (navBtns)     navBtns.classList.remove('hidden');
                 if (warningEl)   warningEl.classList.add('hidden');
                 if (weekNavWrap) weekNavWrap.classList.remove('nav-disabled');
