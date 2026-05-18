@@ -6169,7 +6169,7 @@
             </div>
             <div class="app-topbar-title">
                 <h1>Active Infrastructure Governance OS</h1>
-                <p>Version 0.083</p>
+                <p>Version 0.084</p>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:4px;gap:2px;">
                 <span id="activeOrgBadge" style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.3px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;display:none;"></span>
@@ -6228,7 +6228,7 @@
                 <div class="home-page" id="homePage">
                     <div class="home-welcome">
                         <h2>Welcome to Nexus</h2>
-                        <p>Version 0.083</p>
+                        <p>Version 0.084</p>
                     </div>
                     <div style="width:100%;max-width:540px;">
                     <div class="home-ai-box" id="homeAiBox">
@@ -6335,7 +6335,7 @@
                     <div class="container">
                         <div class="header">
                             <h1>Active Infrastructure Governance OS</h1>
-                            <p>Version 0.083</p>
+                            <p>Version 0.084</p>
                         </div>
                         <div class="content">
             <!-- Dashboard Tab -->
@@ -6689,9 +6689,10 @@
                     </select>
                     <div class="ribbon-sep"></div>
                     <button class="rbtn rbtn-primary" id="syncDataBtn" onclick="syncData('register')">🔄 Sync Data</button>
-                    <button class="rbtn rbtn-success" onclick="toggleAddRiskPanel()">➕ Add New Risk</button>
-                    <button class="rbtn rbtn-danger" onclick="clearAllRisks()">🗑️ Clear All Risks</button>
+                    <button class="rbtn rbtn-success" id="addNewRiskBtn" onclick="toggleAddRiskPanel()">➕ Add New Risk</button>
+                    <button class="rbtn rbtn-danger" id="clearAllRisksBtn" onclick="clearAllRisks()">🗑️ Clear All Risks</button>
                     <button class="rbtn rbtn-toggle" id="saReviewBtn" onclick="filterSAReview()">📋 SA Review</button>
+                    <button class="rbtn rbtn-neutral" id="scanBowtieBtn" onclick="openBowtieFromScan()" style="display:none;"><svg width="14" height="12" viewBox="0 0 14 12" style="vertical-align:-2px;margin-right:4px;display:inline-block"><polygon points="0,0 5.5,6 0,12" fill="currentColor"/><circle cx="7" cy="6" r="1.4" fill="currentColor"/><polygon points="14,0 8.5,6 14,12" fill="currentColor"/></svg>Bowtie Chart</button>
                     <button class="rbtn rbtn-toggle" id="scanRegisterBtn" onclick="scanRegister()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="1" width="11" height="14" rx="1.5" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.4"/><line x1="3.5" y1="5" x2="9.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="7.5" x2="9.5" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3.5" y1="10" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="14" cy="14" r="4.2" fill="white" stroke="currentColor" stroke-width="1.5"/><line x1="17.2" y1="17.2" x2="19.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Scan Register</button>
                     <button class="rbtn rbtn-neutral" onclick="exportToExcel()">📤 Export to Excel</button>
                     <div class="ribbon-sep"></div>
@@ -7049,7 +7050,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Issues</th>
+                                    <th>Items</th>
                                     <th>RAG</th>
                                     <th>Actions and Outcomes</th>
                                     <th>Date Logged</th>
@@ -7111,7 +7112,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Issues</th>
+                                    <th>Items</th>
                                     <th>RAG</th>
                                     <th>Actions and Outcomes</th>
                                     <th>Date Logged</th>
@@ -7173,7 +7174,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Issues</th>
+                                    <th>Items</th>
                                     <th>RAG</th>
                                     <th>Actions and Outcomes</th>
                                     <th>Date Logged</th>
@@ -7235,7 +7236,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Issues</th>
+                                    <th>Items</th>
                                     <th>RAG</th>
                                     <th>Actions and Outcomes</th>
                                     <th>Date Logged</th>
@@ -7297,7 +7298,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Issues</th>
+                                    <th>Items</th>
                                     <th>RAG</th>
                                     <th>Actions and Outcomes</th>
                                     <th>Date Logged</th>
@@ -8845,6 +8846,8 @@
                 window._scannedRiskIds = new Set();
                 btn.innerHTML = _SCAN_BTN_ICON + 'Scan Register';
                 btn.classList.remove('on');
+                // Restore the ribbon buttons that were hidden while scan results were shown
+                _toggleScanRibbonButtons(false);
                 // Hide sync bar cleanly
                 const barEl = document.getElementById('registerSyncBar');
                 const msgEl = document.getElementById('registerSyncMsg');
@@ -8905,6 +8908,9 @@
                 btn.innerHTML = '✕ Clear Scan';
                 btn.classList.add('on');
 
+                // Hide ribbon buttons that don't make sense in scan-results view
+                _toggleScanRibbonButtons(true);
+
                 // Calculate register health based on % of vettable risks (thresholds from config)
                 const total = risks.length;
                 const pct   = total > 0 ? (matched.length / total) * 100 : 0;
@@ -8939,6 +8945,28 @@
                     renderPage();
                 }
             }, 3000);
+        }
+        // Hide/show the Register ribbon buttons that don't apply while
+        // scan results are being displayed, plus the contextual Bowtie button.
+        function _toggleScanRibbonButtons(scanActive) {
+            var ids = ['syncDataBtn', 'addNewRiskBtn', 'clearAllRisksBtn', 'saReviewBtn'];
+            ids.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = scanActive ? 'none' : '';
+            });
+            var bowtieBtn = document.getElementById('scanBowtieBtn');
+            if (bowtieBtn) bowtieBtn.style.display = scanActive ? '' : 'none';
+        }
+
+        // Open the Bowtie view from scan results. Uses the same drill-down
+        // sidebar pattern as Helicopter → BPR Summary etc. so a single Back
+        // click in the sidebar returns the user to the Register.
+        function openBowtieFromScan() {
+            // Push the return callback BEFORE switchDashView runs, so it sees
+            // the stack as non-empty and skips pushing the Helicopter callback.
+            _drillDownStack.push(function() { sidebarNav('register'); });
+            _showDrillDownSidebar();
+            switchDashView('bowtie');
         }
         // ── End Scan Register ─────────────────────────────────────────────────────
 
